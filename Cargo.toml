@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/abyss-core",
+    "crates/abyss-consensus",
+    "crates/abyss-crypto",
+    "crates/abyss-node",
+    "crates/abyss-wallet",
+]
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://example.invalid/abyss"
+authors = ["ABYSS Contributors"]

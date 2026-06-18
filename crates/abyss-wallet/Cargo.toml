@@ -1,0 +1,16 @@
+[package]
+name = "abyss-wallet"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lib]
+name = "abyss_wallet"
+path = "src/lib.rs"
+
+[dependencies]
+abyss-core = { path = "../abyss-core" }
+abyss-crypto = { path = "../abyss-crypto" }
+
