@@ -9,6 +9,10 @@
 - Decide whether old folders should be archived or deleted after comparison.
 - Add a real website build/deploy configuration if Netlify needs more than
   static root files.
+- Review presale strategy with crypto/securities counsel before accepting funds.
+- Add investor whitelist and contribution receipt models.
+- Add vesting schedule logic.
+- Connect `abyss-node presale quote` logic to the website investor flow.
 - Add persistent node storage.
 - Add wallet CLI commands.
 - Start `abyss-crypto` production primitive selection.

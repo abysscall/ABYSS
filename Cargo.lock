@@ -25,7 +25,15 @@ name = "abyss-node"
 version = "0.1.0"
 dependencies = [
  "abyss-core",
+ "abyss-tokenomics",
  "abyss-wallet",
+]
+
+[[package]]
+name = "abyss-tokenomics"
+version = "0.1.0"
+dependencies = [
+ "abyss-core",
 ]
 
 [[package]]

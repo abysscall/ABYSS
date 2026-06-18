@@ -24,6 +24,8 @@ Completed in the initial scaffold:
 - wallet account policy module;
 - mempool;
 - early validator quorum certificate model.
+- tokenomics planning crate;
+- presale strategy draft.
 
 ## Next Milestone: Durable Local Node
 
@@ -34,6 +36,9 @@ Completed in the initial scaffold:
 - add structured logs;
 - add JSON-RPC or gRPC API;
 - add CLI wallet commands.
+- add tokenomics JSON export;
+- add investor whitelist and vesting schedule models.
+- connect presale quote simulation to the website investor form.
 
 ## Privacy Milestone
 
