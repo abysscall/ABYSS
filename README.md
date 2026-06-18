@@ -24,6 +24,7 @@ Native coin:
 - `crates/abyss-crypto` - development identities; production cryptography will
   replace these placeholders.
 - `crates/abyss-consensus` - early validator set and quorum certificate model.
+- `crates/abyss-tokenomics` - AC allocation, presale, and raise-cap planning.
 - `crates/abyss-wallet` - wallet accounts and AI-agent permission policy.
 - `crates/abyss-node` - CLI node and devnet simulation.
 - `docs/` - implementation roadmap and protocol planning.
@@ -37,6 +38,8 @@ Rust protocol:
 cargo test --workspace --lib
 cargo run -p abyss-node -- devnet
 cargo run -p abyss-node -- account new alice
+cargo run -p abyss-node -- tokenomics
+cargo run -p abyss-node -- presale quote --amount=900 --round=public-stage-1 --kyc-approved
 ```
 
 Static website:

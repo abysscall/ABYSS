@@ -1,16 +1,15 @@
 [package]
-name = "abyss-node"
+name = "abyss-tokenomics"
 version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
-[[bin]]
-name = "abyss-node"
-path = "src/main.rs"
+[lib]
+name = "abyss_tokenomics"
+path = "src/lib.rs"
 
 [dependencies]
 abyss-core = { path = "../abyss-core" }
-abyss-tokenomics = { path = "../abyss-tokenomics" }
-abyss-wallet = { path = "../abyss-wallet" }
+
