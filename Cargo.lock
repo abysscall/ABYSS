@@ -30,6 +30,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "abyss-social"
+version = "0.1.0"
+
+[[package]]
 name = "abyss-tokenomics"
 version = "0.1.0"
 dependencies = [
