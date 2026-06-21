@@ -5,6 +5,7 @@ members = [
     "crates/abyss-consensus",
     "crates/abyss-crypto",
     "crates/abyss-node",
+    "crates/abyss-social",
     "crates/abyss-tokenomics",
     "crates/abyss-wallet",
 ]
