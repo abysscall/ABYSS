@@ -12,5 +12,6 @@ path = "src/main.rs"
 
 [dependencies]
 abyss-core = { path = "../abyss-core" }
+abyss-social = { path = "../abyss-social" }
 abyss-tokenomics = { path = "../abyss-tokenomics" }
 abyss-wallet = { path = "../abyss-wallet" }
