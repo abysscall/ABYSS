@@ -209,6 +209,19 @@
   .form-input:focus { border-color: var(--accent2); }
   .form-input::placeholder { color: var(--muted); }
 
+  .quote-block {
+    border: 1px solid var(--border3);
+    background: rgba(0,255,157,0.04);
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.2rem;
+    font-size: 0.82rem;
+  }
+  .quote-block.ok { border-color: var(--border3); color: var(--text); }
+  .quote-block.err { border-color: rgba(192,80,80,0.4); color: #e09090; background: rgba(192,80,80,0.06); }
+  .quote-title { font-size: 0.68rem; color: var(--dim); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .quote-line { margin: 0.2rem 0; }
+  .quote-line strong { color: var(--accent3); }
+
   .checkbox-row {
     display: flex; gap: 1rem; align-items: flex-start;
     padding: 1rem; border: 1px solid var(--border);
@@ -456,6 +469,11 @@
       <input class="form-input" type="text" id="f_amount" placeholder="Minimum $500,000 USD" value="$500,000">
     </div>
 
+    <div class="quote-block ok" id="quoteBlock">
+      <div class="quote-title">Protocol quote (abyss-node presale logic)</div>
+      <div id="quoteBody" class="quote-line">Loading tokenomics…</div>
+    </div>
+
     <div style="margin-top:1.5rem; margin-bottom:0.5rem; font-size:0.7rem; color:var(--dim); letter-spacing:0.12em; text-transform:uppercase;">Agreements — all required</div>
 
     <div class="checkbox-row">
@@ -497,6 +515,7 @@
 
 </div><!-- /page -->
 
+<script src="presale-quote.js"></script>
 <script>
   // Wallet addresses per currency
   const wallets = {
@@ -551,6 +570,53 @@
   }
   renderSlots();
 
+  let tokenomicsData = null;
+
+  function investorQuoteOptions() {
+    return {
+      roundId: AbyssPresaleQuote.ROUND_ID,
+      kycApproved: true,
+      professional: document.getElementById('a4').checked,
+    };
+  }
+
+  function renderQuote() {
+    const block = document.getElementById('quoteBlock');
+    const body = document.getElementById('quoteBody');
+    if (!tokenomicsData) {
+      body.textContent = 'Tokenomics data unavailable.';
+      block.className = 'quote-block err';
+      return;
+    }
+    const amount = document.getElementById('f_amount').value;
+    const quote = AbyssPresaleQuote.quotePresale(tokenomicsData, amount, investorQuoteOptions());
+    if (!quote.ok) {
+      block.className = 'quote-block err';
+      body.textContent = quote.error;
+      return;
+    }
+    block.className = 'quote-block ok';
+    body.innerHTML =
+      '<div class="quote-line">Round: <strong>' + quote.roundName + '</strong></div>' +
+      '<div class="quote-line">Contribution: <strong>' + AbyssPresaleQuote.formatUsd(quote.contributionUsdCents) + '</strong></div>' +
+      '<div class="quote-line">Price: <strong>' + AbyssPresaleQuote.formatUsd(quote.priceUsdCents) + ' / AC</strong></div>' +
+      '<div class="quote-line">Token amount: <strong>' + AbyssPresaleQuote.formatAc(quote.tokenAmountAc) + '</strong></div>' +
+      '<div class="quote-line" style="margin-top:0.5rem;color:var(--dim);font-size:0.75rem;">' + quote.status + '</div>';
+  }
+
+  AbyssPresaleQuote.loadTokenomics('data/tokenomics.json')
+    .then((data) => {
+      tokenomicsData = data;
+      renderQuote();
+    })
+    .catch(() => {
+      tokenomicsData = null;
+      renderQuote();
+    });
+
+  document.getElementById('f_amount').addEventListener('input', renderQuote);
+  document.getElementById('a4').addEventListener('change', renderQuote);
+
   // Form validation & submission
   function submitForm() {
     const name   = document.getElementById('f_name').value.trim();
@@ -572,9 +638,19 @@
       return;
     }
 
+    const quote = tokenomicsData
+      ? AbyssPresaleQuote.quotePresale(tokenomicsData, amount, investorQuoteOptions())
+      : { ok: false, error: 'Quote engine unavailable. Refresh and try again.' };
+    if (!quote.ok) {
+      alert(quote.error);
+      return;
+    }
+
     // Generate reference
     const ref = 'ABYSS-INV-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2,4).toUpperCase();
-    document.getElementById('refCode').textContent = 'Reference: ' + ref;
+    document.getElementById('refCode').textContent =
+      'Reference: ' + ref + ' | Quote: ' + AbyssPresaleQuote.formatAc(quote.tokenAmountAc) +
+      ' @ ' + AbyssPresaleQuote.formatUsd(quote.priceUsdCents) + '/AC';
 
     document.getElementById('submitBtn').style.display = 'none';
     document.getElementById('successBox').classList.add('show');

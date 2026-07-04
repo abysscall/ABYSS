@@ -11,6 +11,7 @@ pub mod coin;
 pub mod genesis;
 pub mod hashing;
 pub mod mempool;
+pub mod storage;
 pub mod transaction;
 
 pub use address::Address;
@@ -19,4 +20,5 @@ pub use chain::{ApplyError, Chain, ChainConfig};
 pub use coin::{Coin, COIN, MAX_SUPPLY};
 pub use genesis::GenesisConfig;
 pub use mempool::{Mempool, MempoolError};
+pub use storage::{init_devnet_chain, load_chain, save_chain, StorageError};
 pub use transaction::{Transaction, TransactionId};
