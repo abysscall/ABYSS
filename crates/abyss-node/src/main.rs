@@ -4,8 +4,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use abyss_core::{hashing, Chain, ChainConfig, Coin, GenesisConfig, Mempool, Transaction};
 use abyss_social::{AgentActivityWindow, AgentSocialAction, AgentSocialPolicy, DevFeed, Visibility};
 use abyss_tokenomics::{
-    parse_usd_to_cents, usd_cents_to_string, BuybackOffer, ContributionReceipt, DexFinalSale,
-    InvestorProfile, KycStatus, TeamVesting, TokenomicsPlan,
+    parse_usd_to_cents, usd_cents_to_string, ContributionReceipt, DexFinalSale,
+    InvestorProfile, InvestorSecondaryWindow, KycStatus, SecondaryListing, TeamVesting,
+    TokenomicsPlan,
 };
 use abyss_wallet::WalletAccount;
 
@@ -36,7 +37,7 @@ fn run() -> Result<(), String> {
         Some("devnet") => run_devnet(),
         Some("presale") => match args.next().as_deref() {
             Some("quote") => quote_presale(args.collect()),
-            Some("buyback") => quote_buyback(args.collect()),
+            Some("buyback") | Some("secondary-listing") => quote_secondary_listing(args.collect()),
             Some("dex-quote") => quote_dex_final_sale(args.collect()),
             Some(command) => Err(format!("unknown presale command '{command}'")),
             None => Err("missing presale command".to_string()),
@@ -267,39 +268,47 @@ impl PresaleQuoteRequest {
     }
 }
 
-// ── presale buyback ──
+// ── presale secondary listing (formerly buyback) ──
 
-fn quote_buyback(args: Vec<String>) -> Result<(), String> {
+fn quote_secondary_listing(args: Vec<String>) -> Result<(), String> {
+    let mut investor_id = "demo-investor".to_string();
     let mut tokens_ac: Option<u64> = None;
+    let mut stage1 = true;
     let mut json = false;
     for arg in args {
         if arg == "--json" { json = true; continue; }
+        if arg == "--not-stage1" { stage1 = false; continue; }
         let (key, value) = arg.split_once('=')
             .ok_or_else(|| format!("invalid argument '{arg}', expected --key=value"))?;
         match key {
+            "--investor" => investor_id = value.to_string(),
             "--tokens" => tokens_ac = Some(value.parse::<u64>().map_err(|_| format!("invalid --tokens value '{value}'"))?),
             _ => return Err(format!("unknown argument '{key}'")),
         }
     }
     let tokens_ac = tokens_ac.ok_or("missing --tokens=<ac amount>")?;
-    let buyback = BuybackOffer::abyss_default();
-    let tokens = Coin::from_ac(tokens_ac).ok_or_else(|| format!("invalid token amount {tokens_ac}"))?;
-    if tokens > buyback.token_cap {
-        return Err(format!("requested {tokens} exceeds buyback cap of {}", buyback.token_cap));
-    }
-    let payout = buyback.payout_usd_cents(tokens).ok_or("payout calculation overflow")?;
+    let window = InvestorSecondaryWindow::abyss_default();
+    let listing = SecondaryListing::new(&investor_id, tokens_ac, stage1)
+        .map_err(|e| format!("invalid listing: {e:?}"))?;
+    window.validate_listing(&listing)
+        .map_err(|e| format!("secondary listing rejected: {e:?}"))?;
+    let payout = window.seller_payout_usd_cents(listing.tokens_to_list)
+        .ok_or("payout calculation overflow")?;
     if json {
-        println!("{{\n  \"offer_id\": \"{}\",\n  \"offer_name\": \"{}\",\n  \"tokens_ac\": \"{}\",\n  \"price_usd_cents\": {},\n  \"payout_usd_cents\": {},\n  \"status\": \"quote only; not an executed buyback\"\n}}",
-            buyback.id, buyback.name, tokens, buyback.price_usd_cents, payout);
+        println!("{{\n  \"window_id\": \"{}\",\n  \"window_name\": \"{}\",\n  \"investor_id\": \"{}\",\n  \"tokens_ac\": \"{}\",\n  \"price_usd_cents\": {},\n  \"seller_payout_usd_cents\": {},\n  \"min_listing_ac\": {},\n  \"status\": \"quote only; facilitated P2P secondary market, not an ABYSS buyback\"\n}}",
+            window.id, json_escape(window.name), json_escape(&investor_id),
+            listing.tokens_to_list, window.price_usd_cents, payout, window.min_listing_ac());
         return Ok(());
     }
-    println!("ABYSS investor buyback quote");
-    println!("offer: {} ({})", buyback.name, buyback.id);
-    println!("tokens_offered: {tokens}");
-    println!("buyback_price: {}", usd_cents_to_string(buyback.price_usd_cents));
-    println!("payout: {}", usd_cents_to_string(payout));
-    println!("offer_cap: {} (max payout {})", buyback.token_cap, usd_cents_to_string(buyback.max_payout_usd_cents()));
-    println!("status: quote only; not an executed buyback");
+    println!("ABYSS investor secondary window quote");
+    println!("window: {} ({})", window.name, window.id);
+    println!("investor_id: {investor_id}");
+    println!("tokens_to_list: {}", listing.tokens_to_list);
+    println!("listing_price: {}", usd_cents_to_string(window.price_usd_cents));
+    println!("seller_payout: {}", usd_cents_to_string(payout));
+    println!("min_listing: {} AC ({}% of Stage I slot)", window.min_listing_ac(), window.min_listing_bps as f64 / 100.0);
+    println!("registration_days: {}", window.registration_days);
+    println!("status: quote only; facilitated P2P secondary market, not an ABYSS buyback");
     Ok(())
 }
 
@@ -341,7 +350,7 @@ fn print_tokenomics(args: Vec<String>) -> Result<(), String> {
     let json = args.iter().any(|a| a == "--json");
     let plan = TokenomicsPlan::abyss_default();
     plan.validate().map_err(|err| format!("invalid tokenomics plan: {err:?}"))?;
-    let buyback = BuybackOffer::abyss_default();
+    let secondary = InvestorSecondaryWindow::abyss_default();
     let dex_sale = DexFinalSale::abyss_default();
 
     if json {
@@ -354,11 +363,12 @@ fn print_tokenomics(args: Vec<String>) -> Result<(), String> {
         }).collect();
         let total = plan.total_sale_cap_usd_cents().unwrap_or(0);
         println!(
-            "{{\n  \"symbol\": \"{}\",\n  \"max_supply_ac\": \"{}\",\n  \"team_reserve_ac\": \"{}\",\n  \"public_sale_ac\": \"{}\",\n  \"allocations\": [\n{}\n  ],\n  \"sale_rounds\": [\n{}\n  ],\n  \"buyback_offer\": {{ \"id\": \"{}\", \"name\": \"{}\", \"token_cap_ac\": \"{}\", \"price_usd_cents\": {}, \"max_payout_usd_cents\": {} }},\n  \"final_sale_dex\": {{ \"id\": \"{}\", \"name\": \"{}\", \"price_usd_cents\": {}, \"note\": \"variable supply, executed via DEX test orders\" }},\n  \"maximum_sale_raise_usd_cents\": {}\n}}",
+            "{{\n  \"symbol\": \"{}\",\n  \"max_supply_ac\": \"{}\",\n  \"team_reserve_ac\": \"{}\",\n  \"public_sale_ac\": \"{}\",\n  \"allocations\": [\n{}\n  ],\n  \"sale_rounds\": [\n{}\n  ],\n  \"investor_secondary_window\": {{ \"id\": \"{}\", \"name\": \"{}\", \"price_usd_cents\": {}, \"min_listing_ac\": {}, \"registration_days\": {} }},\n  \"final_sale_dex\": {{ \"id\": \"{}\", \"name\": \"{}\", \"price_usd_cents\": {}, \"note\": \"variable supply, executed via DEX test orders\" }},\n  \"maximum_sale_raise_usd_cents\": {}\n}}",
             plan.symbol, plan.max_supply, plan.team_reserve_amount(),
             plan.allocation_amount("Public sale and liquidity formation").unwrap_or(Coin::ZERO),
             allocations_json.join(",\n"), rounds_json.join(",\n"),
-            buyback.id, buyback.name, buyback.token_cap, buyback.price_usd_cents, buyback.max_payout_usd_cents(),
+            secondary.id, json_escape(secondary.name), secondary.price_usd_cents,
+            secondary.min_listing_ac(), secondary.registration_days,
             dex_sale.id, dex_sale.name, dex_sale.price_usd_cents, total,
         );
         return Ok(());
@@ -377,11 +387,11 @@ fn print_tokenomics(args: Vec<String>) -> Result<(), String> {
     for r in &plan.sale_rounds { println!("  - {} [{}]: cap {}, price {}, min ${}, raise cap {}", r.name, r.id, r.token_cap, usd_cents_to_string(r.price_usd_cents), r.minimum_ticket_usd, usd_cents_to_string(r.raise_cap_usd_cents())); }
     println!();
     println!("special_stages:");
-    println!("  - {} [{}]: cap {}, price {}, max payout {} (not a mint, returns to public pool)", buyback.name, buyback.id, buyback.token_cap, usd_cents_to_string(buyback.price_usd_cents), usd_cents_to_string(buyback.max_payout_usd_cents()));
+    println!("  - {} [{}]: min listing {} AC, price {}, registration {} days (P2P secondary, not ABYSS buyback)", secondary.name, secondary.id, secondary.min_listing_ac(), usd_cents_to_string(secondary.price_usd_cents), secondary.registration_days);
     println!("  - {} [{}]: variable supply, price {} (executed via ABYSS DEX test orders)", dex_sale.name, dex_sale.id, usd_cents_to_string(dex_sale.price_usd_cents));
     if let Some(total) = plan.total_sale_cap_usd_cents() {
         println!();
-        println!("maximum_sale_raise: {} (standard rounds only; excludes buyback and variable dex sale)", usd_cents_to_string(total));
+        println!("maximum_sale_raise: {} (standard rounds only; excludes secondary window and variable dex sale)", usd_cents_to_string(total));
     }
     Ok(())
 }
@@ -487,7 +497,8 @@ fn print_help() {
     println!("  abyss-node account new [label]");
     println!("  abyss-node devnet");
     println!("  abyss-node presale quote --amount=<usd> [--round=<id>] [--kyc-approved] [--professional] [--json]");
-    println!("  abyss-node presale buyback --tokens=<ac amount> [--json]");
+    println!("  abyss-node presale secondary-listing --tokens=<ac amount> [--investor=<id>] [--json]");
+    println!("  abyss-node presale buyback ...          (alias for secondary-listing)");
     println!("  abyss-node presale dex-quote --amount=<usd> [--json]");
     println!("  abyss-node tokenomics [--json]");
     println!("  abyss-node vesting [--json]");
