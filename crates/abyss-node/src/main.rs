@@ -1,7 +1,13 @@
 use std::env;
+use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use abyss_core::{hashing, Chain, ChainConfig, Coin, GenesisConfig, Mempool, Transaction};
+mod data;
+
+use abyss_core::{
+    hashing, init_devnet_chain, load_chain, save_chain, Address, Chain, ChainConfig, Coin,
+    GenesisConfig, Mempool, Transaction,
+};
 use abyss_social::{AgentActivityWindow, AgentSocialAction, AgentSocialPolicy, DevFeed, Visibility};
 use abyss_tokenomics::{
     parse_usd_to_cents, usd_cents_to_string, ContributionReceipt, DexFinalSale,
@@ -9,6 +15,7 @@ use abyss_tokenomics::{
     TokenomicsPlan,
 };
 use abyss_wallet::WalletAccount;
+use data::{list_accounts, load_account, parse_data_dir, save_account, StoredAccount};
 
 fn main() {
     let exit_code = match run() {
@@ -28,13 +35,32 @@ fn run() -> Result<(), String> {
         Some("account") => match args.next().as_deref() {
             Some("new") => {
                 let label = args.next().unwrap_or_else(|| "default".to_string());
-                create_account(&label);
+                let data_dir = parse_data_dir(&args.collect::<Vec<_>>());
+                create_account(&label, &data_dir);
+                Ok(())
+            }
+            Some("import") => {
+                let label = args.next().ok_or("missing account label")?;
+                import_account(label, args.collect())?;
                 Ok(())
             }
             Some(command) => Err(format!("unknown account command '{command}'")),
             None => Err("missing account command".to_string()),
         },
-        Some("devnet") => run_devnet(),
+        Some("chain") => match args.next().as_deref() {
+            Some("init") => chain_init(args.collect()),
+            Some("status") => chain_status(args.collect()),
+            Some(command) => Err(format!("unknown chain command '{command}'")),
+            None => Err("missing chain command. Try: chain init | chain status".to_string()),
+        },
+        Some("wallet") => match args.next().as_deref() {
+            Some("list") => wallet_list(args.collect()),
+            Some("balance") => wallet_balance(args.collect()),
+            Some("send") => wallet_send(args.collect()),
+            Some(command) => Err(format!("unknown wallet command '{command}'")),
+            None => Err("missing wallet command. Try: wallet list | wallet balance | wallet send".to_string()),
+        },
+        Some("devnet") => run_devnet(args.collect()),
         Some("presale") => match args.next().as_deref() {
             Some("quote") => quote_presale(args.collect()),
             Some("buyback") | Some("secondary-listing") => quote_secondary_listing(args.collect()),
@@ -424,19 +450,159 @@ fn print_vesting(args: Vec<String>) -> Result<(), String> {
 
 // ── account ──
 
-fn create_account(label: &str) {
+fn create_account(label: &str, data_dir: &PathBuf) {
     let account = WalletAccount::generate(label);
-    println!("ABYSS dev account created");
+    let stored = StoredAccount::from_account(&account, None);
+    match save_account(data_dir, &stored) {
+        Ok(()) => {
+            println!("ABYSS dev account created");
+            println!("label: {}", account.label());
+            println!("address: {}", account.address());
+            println!("public_key: {}", account.public_key());
+            println!("saved_to: {}", data::account_path(data_dir, label).display());
+            println!("agent_permissions: {:?}", account.agent_policy().permissions());
+            println!("warning: dev account only; use 'account import --seed=...' for reproducible signing keys");
+        }
+        Err(err) => eprintln!("failed to save account: {err}"),
+    }
+}
+
+fn import_account(label: String, args: Vec<String>) -> Result<(), String> {
+    let data_dir = parse_data_dir(&args);
+    let mut seed = None;
+    for arg in args {
+        if let Some(value) = arg.strip_prefix("--seed=") {
+            seed = Some(value.to_string());
+        }
+    }
+    let seed = seed.ok_or("missing --seed=<dev seed bytes>")?;
+    let account = WalletAccount::from_dev_seed(&label, &seed);
+    let stored = StoredAccount::from_account(&account, Some(seed));
+    save_account(&data_dir, &stored)?;
+    println!("ABYSS dev account imported");
     println!("label: {}", account.label());
     println!("address: {}", account.address());
     println!("public_key: {}", account.public_key());
-    println!("agent_permissions: {:?}", account.agent_policy().permissions());
-    println!("warning: dev account only; production key storage is not implemented yet");
+    println!("saved_to: {}", data::account_path(&data_dir, &label).display());
+    Ok(())
+}
+
+// ── chain persistence ──
+
+fn chain_init(args: Vec<String>) -> Result<(), String> {
+    let data_dir = parse_data_dir(&args);
+    let chain = init_devnet_chain(&data_dir, now_ms()).map_err(|e| e.to_string())?;
+    println!("ABYSS chain initialized");
+    println!("data_dir: {}", data_dir.display());
+    println!("chain_id: {}", chain.config().chain_id);
+    println!("height: {}", chain.height());
+    println!("tip_hash: {}", hashing::hex(&chain.tip_hash()));
+    Ok(())
+}
+
+fn chain_status(args: Vec<String>) -> Result<(), String> {
+    let data_dir = parse_data_dir(&args);
+    let path = data::chain_path(&data_dir);
+    let chain = load_chain(&path).map_err(|e| format!("failed to load {}: {e}", path.display()))?;
+    println!("ABYSS chain status");
+    println!("data_dir: {}", data_dir.display());
+    println!("chain_id: {}", chain.config().chain_id);
+    println!("height: {}", chain.height());
+    println!("tip_hash: {}", hashing::hex(&chain.tip_hash()));
+    Ok(())
+}
+
+// ── wallet ──
+
+fn wallet_list(args: Vec<String>) -> Result<(), String> {
+    let data_dir = parse_data_dir(&args);
+    let accounts = list_accounts(&data_dir)?;
+    println!("ABYSS wallet accounts ({})", accounts.len());
+    if accounts.is_empty() {
+        println!("(none — try: account new alice | account import alice --seed=abyss:dev:alice)");
+        return Ok(());
+    }
+    for account in accounts {
+        let seed_note = if account.dev_seed.is_some() { "signable" } else { "view-only" };
+        println!("  - {}: {} [{seed_note}]", account.label, account.address);
+    }
+    Ok(())
+}
+
+fn wallet_balance(args: Vec<String>) -> Result<(), String> {
+    let data_dir = parse_data_dir(&args);
+    let mut address = None;
+    let mut label = None;
+    for arg in args {
+        if let Some(value) = arg.strip_prefix("--address=") {
+            address = Some(value.to_string());
+        } else if let Some(value) = arg.strip_prefix("--label=") {
+            label = Some(value.to_string());
+        }
+    }
+    let address = match (address, label) {
+        (Some(addr), _) => addr,
+        (None, Some(lbl)) => load_account(&data_dir, &lbl)?.address,
+        (None, None) => return Err("missing --address=<addr> or --label=<name>".to_string()),
+    };
+    let path = data::chain_path(&data_dir);
+    let chain = load_chain(&path).map_err(|e| format!("failed to load chain: {e}"))?;
+    let parsed = Address::new(address.clone()).map_err(|e| e.to_string())?;
+    println!("ABYSS wallet balance");
+    println!("address: {address}");
+    println!("balance: {}", chain.balance_of(&parsed));
+    println!("nonce: {}", chain.next_nonce(&parsed));
+    Ok(())
+}
+
+fn wallet_send(args: Vec<String>) -> Result<(), String> {
+    let data_dir = parse_data_dir(&args);
+    let mut from = None;
+    let mut to = None;
+    let mut amount_ac = None;
+    let mut fee_ac = 0_u64;
+    for arg in args {
+        if let Some(value) = arg.strip_prefix("--from=") {
+            from = Some(value.to_string());
+        } else if let Some(value) = arg.strip_prefix("--to=") {
+            to = Some(value.to_string());
+        } else if let Some(value) = arg.strip_prefix("--amount=") {
+            amount_ac = Some(value.parse::<u64>().map_err(|_| format!("invalid --amount '{value}'"))?);
+        } else if let Some(value) = arg.strip_prefix("--fee=") {
+            fee_ac = value.parse::<u64>().map_err(|_| format!("invalid --fee '{value}'"))?;
+        }
+    }
+    let from_label = from.ok_or("missing --from=<account label>")?;
+    let to_addr = to.ok_or("missing --to=<address>")?;
+    let amount_ac = amount_ac.ok_or("missing --amount=<ac>")?;
+    let stored = load_account(&data_dir, &from_label)?;
+    let account = stored.load_wallet()?;
+    let to = Address::new(to_addr).map_err(|e| e.to_string())?;
+    let path = data::chain_path(&data_dir);
+    let mut chain = load_chain(&path).map_err(|e| format!("failed to load chain: {e}"))?;
+    let tx = account.create_payment(
+        to,
+        Coin::from_ac(amount_ac).ok_or("invalid amount")?,
+        Coin::from_ac(fee_ac).ok_or("invalid fee")?,
+        chain.next_nonce(&account.address()),
+    );
+    chain
+        .produce_block("abyss-validator-1", now_ms(), vec![tx])
+        .map_err(|e| format!("transaction rejected: {e:?}"))?;
+    save_chain(&chain, &path).map_err(|e| e.to_string())?;
+    println!("ABYSS wallet send");
+    println!("from: {} ({})", from_label, account.address());
+    println!("amount: {}", Coin::from_ac(amount_ac).unwrap());
+    println!("new_height: {}", chain.height());
+    println!("tip_hash: {}", hashing::hex(&chain.tip_hash()));
+    Ok(())
 }
 
 // ── devnet ──
 
-fn run_devnet() -> Result<(), String> {
+fn run_devnet(args: Vec<String>) -> Result<(), String> {
+    let data_dir = parse_data_dir(&args);
+    let persist = args.iter().any(|a| a == "--persist");
     let treasury_account = WalletAccount::from_dev_seed("treasury", "abyss:genesis:treasury");
     let alice_account    = WalletAccount::from_dev_seed("alice", "abyss:dev:alice");
     let bob_account      = WalletAccount::from_dev_seed("bob", "abyss:dev:bob");
@@ -485,6 +651,22 @@ fn run_devnet() -> Result<(), String> {
     println!("treasury: {}", chain.balance_of(&treasury));
     println!("alice: {}", chain.balance_of(&alice));
     println!("bob: {}", chain.balance_of(&bob));
+
+    if persist {
+        let _ = std::fs::create_dir_all(&data_dir);
+        for (_label, account, seed) in [
+            ("treasury", &treasury_account, "abyss:genesis:treasury"),
+            ("alice", &alice_account, "abyss:dev:alice"),
+            ("bob", &bob_account, "abyss:dev:bob"),
+        ] {
+            save_account(
+                &data_dir,
+                &StoredAccount::from_account(account, Some(seed.to_string())),
+            )?;
+        }
+        save_chain(&chain, data::chain_path(&data_dir)).map_err(|e| e.to_string())?;
+        println!("persisted_to: {}", data_dir.display());
+    }
     Ok(())
 }
 
@@ -494,8 +676,14 @@ fn print_help() {
     println!("ABYSS Node");
     println!();
     println!("Usage:");
-    println!("  abyss-node account new [label]");
-    println!("  abyss-node devnet");
+    println!("  abyss-node account new [label] [--data-dir=<path>]");
+    println!("  abyss-node account import <label> --seed=<seed> [--data-dir=<path>]");
+    println!("  abyss-node chain init [--data-dir=<path>]");
+    println!("  abyss-node chain status [--data-dir=<path>]");
+    println!("  abyss-node wallet list [--data-dir=<path>]");
+    println!("  abyss-node wallet balance --address=<addr> | --label=<name> [--data-dir=<path>]");
+    println!("  abyss-node wallet send --from=<label> --to=<addr> --amount=<ac> [--fee=<ac>] [--data-dir=<path>]");
+    println!("  abyss-node devnet [--persist] [--data-dir=<path>]");
     println!("  abyss-node presale quote --amount=<usd> [--round=<id>] [--kyc-approved] [--professional] [--json]");
     println!("  abyss-node presale secondary-listing --tokens=<ac amount> [--investor=<id>] [--json]");
     println!("  abyss-node presale buyback ...          (alias for secondary-listing)");

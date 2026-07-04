@@ -1,0 +1,62 @@
+{
+  "symbol": "AC",
+  "max_supply_ac": 55000000,
+  "team_reserve_ac": 30000000,
+  "public_sale_ac": 25000000,
+  "sale_rounds": [
+    {
+      "id": "sale-to-investors",
+      "name": "Sale to Investors",
+      "token_cap_ac": 2000000,
+      "price_usd_cents": 100,
+      "minimum_ticket_usd": 500000,
+      "raise_cap_usd_cents": 200000000
+    },
+    {
+      "id": "pre-sale",
+      "name": "Pre-Sale",
+      "token_cap_ac": 3000000,
+      "price_usd_cents": 200,
+      "minimum_ticket_usd": 0,
+      "raise_cap_usd_cents": 600000000
+    },
+    {
+      "id": "public-stage-1",
+      "name": "Sale Stage 1",
+      "token_cap_ac": 5000000,
+      "price_usd_cents": 300,
+      "minimum_ticket_usd": 0,
+      "raise_cap_usd_cents": 1500000000
+    },
+    {
+      "id": "public-stage-2",
+      "name": "Sale Stage 2",
+      "token_cap_ac": 5000000,
+      "price_usd_cents": 400,
+      "minimum_ticket_usd": 0,
+      "raise_cap_usd_cents": 2000000000
+    },
+    {
+      "id": "public-stage-3",
+      "name": "Sale Stage 3",
+      "token_cap_ac": 10000000,
+      "price_usd_cents": 500,
+      "minimum_ticket_usd": 0,
+      "raise_cap_usd_cents": 5000000000
+    }
+  ],
+  "investor_secondary_window": {
+    "id": "investor-secondary-window",
+    "name": "Investor Secondary Window",
+    "price_usd_cents": 300,
+    "min_listing_ac": 250000,
+    "registration_days": 14
+  },
+  "final_sale_dex": {
+    "id": "final-sale-dex",
+    "name": "Final Sale (ABYSS DEX)",
+    "price_usd_cents": 500
+  },
+  "maximum_sale_raise_usd_cents": 9300000000,
+  "_source": "abyss-node tokenomics --json"
+}

@@ -7,7 +7,7 @@ use crate::genesis::{GenesisConfig, GenesisError};
 use crate::hashing::{dev_hash, Hash256};
 use crate::transaction::{Transaction, TransactionId};
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct ChainConfig {
     pub chain_id: String,
     pub block_time_ms: u64,
@@ -78,6 +78,58 @@ impl Chain {
 
     pub fn blocks(&self) -> &[Block] {
         &self.blocks
+    }
+
+    pub fn snapshot_state(&self) -> (BTreeMap<String, u64>, BTreeMap<String, u64>) {
+        let balances = self
+            .balances
+            .iter()
+            .map(|(address, coin)| (address.as_str().to_string(), coin.micro_ac()))
+            .collect();
+        let nonces = self
+            .nonces
+            .iter()
+            .map(|(address, nonce)| (address.as_str().to_string(), *nonce))
+            .collect();
+        (balances, nonces)
+    }
+
+    pub fn restore_state(
+        mut self,
+        balances: BTreeMap<String, u64>,
+        nonces: BTreeMap<String, u64>,
+    ) -> Result<Self, ApplyError> {
+        self.balances = BTreeMap::new();
+        for (address, micro_ac) in balances {
+            let coin = Coin::from_micro_ac(micro_ac).ok_or(ApplyError::BalanceOverflow)?;
+            self.balances.insert(
+                Address::new(address).map_err(|_| ApplyError::BalanceOverflow)?,
+                coin,
+            );
+        }
+        self.nonces = BTreeMap::new();
+        for (address, nonce) in nonces {
+            self.nonces.insert(
+                Address::new(address).map_err(|_| ApplyError::BalanceOverflow)?,
+                nonce,
+            );
+        }
+        Ok(self)
+    }
+
+    pub fn from_persisted(
+        config: ChainConfig,
+        blocks: Vec<Block>,
+        balances: BTreeMap<String, u64>,
+        nonces: BTreeMap<String, u64>,
+    ) -> Result<Self, ApplyError> {
+        Self {
+            config,
+            blocks,
+            balances: BTreeMap::new(),
+            nonces: BTreeMap::new(),
+        }
+        .restore_state(balances, nonces)
     }
 
     pub fn apply_transaction(&mut self, tx: &Transaction) -> Result<TransactionId, ApplyError> {
