@@ -1,21 +1,14 @@
 use std::env;
-use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-mod data;
-
-use abyss_core::{
-    hashing, init_devnet_chain, load_chain, save_chain, Address, Chain, ChainConfig, Coin,
-    GenesisConfig, Mempool, Transaction,
-};
+use abyss_core::{hashing, Chain, ChainConfig, Coin, GenesisConfig, Mempool, Transaction};
 use abyss_social::{AgentActivityWindow, AgentSocialAction, AgentSocialPolicy, DevFeed, Visibility};
 use abyss_tokenomics::{
     parse_usd_to_cents, usd_cents_to_string, ContributionReceipt, DexFinalSale,
-    InvestorProfile, InvestorSecondaryWindow, KycStatus, SecondaryListing, TeamVesting,
-    TokenomicsPlan,
+    InvestorProfile, InvestorSecondaryWindow, KycStatus, SecondaryListing,
+    TeamVesting, TokenomicsPlan,
 };
 use abyss_wallet::WalletAccount;
-use data::{list_accounts, load_account, parse_data_dir, save_account, StoredAccount};
 
 fn main() {
     let exit_code = match run() {
@@ -25,7 +18,6 @@ fn main() {
             1
         }
     };
-
     std::process::exit(exit_code);
 }
 
@@ -35,190 +27,129 @@ fn run() -> Result<(), String> {
         Some("account") => match args.next().as_deref() {
             Some("new") => {
                 let label = args.next().unwrap_or_else(|| "default".to_string());
-                let data_dir = parse_data_dir(&args.collect::<Vec<_>>());
-                create_account(&label, &data_dir);
-                Ok(())
-            }
-            Some("import") => {
-                let label = args.next().ok_or("missing account label")?;
-                import_account(label, args.collect())?;
+                create_account(&label);
                 Ok(())
             }
             Some(command) => Err(format!("unknown account command '{command}'")),
             None => Err("missing account command".to_string()),
         },
-        Some("chain") => match args.next().as_deref() {
-            Some("init") => chain_init(args.collect()),
-            Some("status") => chain_status(args.collect()),
-            Some(command) => Err(format!("unknown chain command '{command}'")),
-            None => Err("missing chain command. Try: chain init | chain status".to_string()),
-        },
-        Some("wallet") => match args.next().as_deref() {
-            Some("list") => wallet_list(args.collect()),
-            Some("balance") => wallet_balance(args.collect()),
-            Some("send") => wallet_send(args.collect()),
-            Some(command) => Err(format!("unknown wallet command '{command}'")),
-            None => Err("missing wallet command. Try: wallet list | wallet balance | wallet send".to_string()),
-        },
-        Some("devnet") => run_devnet(args.collect()),
+        Some("devnet") => run_devnet(),
         Some("presale") => match args.next().as_deref() {
-            Some("quote") => quote_presale(args.collect()),
-            Some("buyback") | Some("secondary-listing") => quote_secondary_listing(args.collect()),
-            Some("dex-quote") => quote_dex_final_sale(args.collect()),
+            Some("quote")            => quote_presale(args.collect()),
+            Some("secondary-window") => quote_secondary_window(args.collect()),
+            Some("dex-quote")        => quote_dex_final_sale(args.collect()),
             Some(command) => Err(format!("unknown presale command '{command}'")),
             None => Err("missing presale command".to_string()),
         },
         Some("tokenomics") => print_tokenomics(args.collect()),
-        Some("vesting") => print_vesting(args.collect()),
+        Some("vesting")    => print_vesting(args.collect()),
         Some("social") => match args.next().as_deref() {
             Some("demo") => run_social_demo(),
             Some("post") => social_post(args.collect()),
             Some(command) => Err(format!("unknown social command '{command}'")),
             None => Err("missing social command. Try: social demo | social post --author=<addr> --body=<text>".to_string()),
         },
-        Some("help") | Some("--help") | Some("-h") | None => {
-            print_help();
-            Ok(())
-        }
+        Some("help") | Some("--help") | Some("-h") | None => { print_help(); Ok(()) }
         Some(command) => Err(format!("unknown command '{command}'")),
     }
 }
 
-// ── social demo — full devnet-style walkthrough of the social layer ──
+// ── presale secondary-window ──────────────────────────────────────────────────
+//
+// Investor Secondary Window: Stage I investors may list their tokens for P2P
+// sale to new participants at $3.00/AC. ABYSS facilitates but does NOT
+// purchase tokens itself — no buyback obligation.
+//
+// Usage:
+//   abyss-node presale secondary-window --tokens=<ac> [--json]
+//   abyss-node presale secondary-window --info [--json]
 
-fn run_social_demo() -> Result<(), String> {
-    let now = now_ms();
-    let mut feed = DevFeed::new();
-
-    // Simulate two users (reusing devnet wallet addresses for consistency)
-    let alice = "abyss1dev_alice";
-    let bob   = "abyss1dev_bob";
-
-    // 1. Alice publishes a public attributed post
-    let post1 = feed
-        .publish(alice, "Hello ABYSS. The future of private social is here.", Visibility::Attributed, now)
-        .map_err(|e| format!("post failed: {e:?}"))?;
-
-    // 2. Bob publishes a shielded post (author hidden from the network)
-    let post2 = feed
-        .publish(bob, "This message is mine. The network cannot prove it.", Visibility::Shielded, now + 1_000)
-        .map_err(|e| format!("post failed: {e:?}"))?;
-
-    // 3. Alice replies to her own post
-    let post3 = feed
-        .reply(alice, "Building in public. Transacting in private.", Visibility::Attributed, now + 2_000, post1)
-        .map_err(|e| format!("reply failed: {e:?}"))?;
-
-    // 4. Alice's AI Agent reposts within its curator policy
-    let agent_policy = AgentSocialPolicy::curator_default();
-    let mut agent_window = AgentActivityWindow::new(now);
-    agent_window
-        .record_post(&agent_policy, AgentSocialAction::Repost, now + 3_000)
-        .map_err(|e| format!("agent action rejected: {e:?}"))?;
-
-    // 5. Attempt to exceed Agent rate limit
-    for i in 0..9 {
-        let _ = agent_window.record_post(&agent_policy, AgentSocialAction::Repost, now + 4_000 + i);
-    }
-    let rate_limit_result =
-        agent_window.record_post(&agent_policy, AgentSocialAction::Repost, now + 5_000);
-
-    println!("ABYSS social layer — devnet demonstration");
-    println!("─────────────────────────────────────────");
-    println!();
-    println!("feed: {} posts", feed.len());
-    println!();
-
-    println!("post #{}: [attributed]", post1.0);
-    if let Some(p) = feed.get(post1) {
-        println!("  author : {}", p.author);
-        println!("  body   : {}", p.body);
-    }
-    println!();
-
-    println!("post #{}: [shielded]", post2.0);
-    if let Some(p) = feed.get(post2) {
-        println!("  author : <hidden — only the author and view-key holders can see this>");
-        println!("  body   : {}", p.body);
-        println!("  author_visible_to(alice): {}", p.author_visible_to(alice, &Default::default()));
-        println!("  author_visible_to(bob):   {}", p.author_visible_to(bob, &Default::default()));
-    }
-    println!();
-
-    println!("post #{}: [reply to #{}]", post3.0, post1.0);
-    if let Some(p) = feed.get(post3) {
-        println!("  author : {}", p.author);
-        println!("  body   : {}", p.body);
-    }
-    let replies = feed.replies_to(post1);
-    println!("  replies to #{}: {} found", post1.0, replies.len());
-    println!();
-
-    println!("ai agent (curator policy):");
-    println!("  can_post   : {}", agent_policy.can_post);
-    println!("  can_repost : {}", agent_policy.can_repost);
-    println!("  rate_limit : {} reposts / {} seconds", agent_policy.max_posts_per_window, agent_policy.rate_window_seconds);
-    match rate_limit_result {
-        Err(e) => println!("  rate limit enforced: {:?}", e),
-        Ok(()) => println!("  (rate limit not yet hit)"),
-    }
-    println!();
-    println!("note: this is an in-memory devnet feed.");
-    println!("      production storage is content-addressed and replicated (Phase 6).");
-
-    Ok(())
-}
-
-// ── social post — publish a single post from the CLI ──
-
-fn social_post(args: Vec<String>) -> Result<(), String> {
-    let mut author = String::new();
-    let mut body = String::new();
-    let mut shielded = false;
+fn quote_secondary_window(args: Vec<String>) -> Result<(), String> {
+    let mut tokens_ac: Option<u64> = None;
+    let mut info_only = false;
+    let mut json = false;
 
     for arg in &args {
-        if arg == "--shielded" {
-            shielded = true;
-            continue;
-        }
-        let (key, value) = arg
-            .split_once('=')
+        if arg == "--json"  { json = true;      continue; }
+        if arg == "--info"  { info_only = true;  continue; }
+        let (key, value) = arg.split_once('=')
             .ok_or_else(|| format!("invalid argument '{arg}', expected --key=value"))?;
         match key {
-            "--author" => author = value.to_string(),
-            "--body"   => body = value.to_string(),
+            "--tokens" => tokens_ac = Some(
+                value.parse::<u64>().map_err(|_| format!("invalid --tokens value '{value}'"))?
+            ),
             _ => return Err(format!("unknown argument '{key}'")),
         }
     }
 
-    if author.is_empty() { return Err("missing --author=<address>".to_string()); }
-    if body.is_empty()   { return Err("missing --body=<text>".to_string()); }
+    let window = InvestorSecondaryWindow::abyss_default();
 
-    let visibility = if shielded { Visibility::Shielded } else { Visibility::Attributed };
-    let mut feed = DevFeed::new();
-    let id = feed
-        .publish(&author, &body, visibility, now_ms())
-        .map_err(|e| format!("post rejected: {e:?}"))?;
+    // -- info mode: just print window parameters --
+    if info_only || tokens_ac.is_none() {
+        if json {
+            println!(
+                "{{\n  \"id\": \"{}\",\n  \"name\": \"{}\",\n  \"price_usd_cents\": {},\n  \"registration_days\": {},\n  \"min_listing_bps\": {},\n  \"min_listing_ac\": {},\n  \"eligible_sellers\": \"Stage I investors only\",\n  \"eligible_buyers\": \"any participant\",\n  \"abyss_obligation\": \"none — facilitated P2P market, not a buyback\"\n}}",
+                window.id, window.name, window.price_usd_cents,
+                window.registration_days, window.min_listing_bps, window.min_listing_ac()
+            );
+        } else {
+            println!("ABYSS Investor Secondary Window");
+            println!("id                 : {}", window.id);
+            println!("price              : {}", usd_cents_to_string(window.price_usd_cents));
+            println!("registration phase : {} days (intent listing)", window.registration_days);
+            println!("sales phase        : until all listed tokens are sold");
+            println!("min listing        : {}% of Stage I allocation = {} AC minimum",
+                window.min_listing_bps / 100, window.min_listing_ac());
+            println!("eligible sellers   : Stage I investors only");
+            println!("eligible buyers    : any participant");
+            println!("abyss obligation   : NONE — facilitated P2P market, not a buyback");
+            println!();
+            println!("note: submit --tokens=<amount> to calculate a specific listing quote");
+        }
+        return Ok(());
+    }
 
-    println!("ABYSS social post");
-    println!("post_id    : {}", id.0);
-    println!("author     : {author}");
-    println!("visibility : {}", if shielded { "shielded" } else { "attributed" });
-    println!("body       : {body}");
-    println!("status     : published to devnet feed (in-memory)");
+    // -- listing quote mode --
+    let tokens_ac = tokens_ac.unwrap();
+    let listing = SecondaryListing::new("demo-investor", tokens_ac, true)
+        .map_err(|e| format!("invalid token amount: {e:?}"))?;
+    window.validate_listing(&listing)
+        .map_err(|e| format!("listing rejected: {e:?}"))?;
+
+    let payout = window
+        .seller_payout_usd_cents(listing.tokens_to_list)
+        .ok_or("payout calculation overflow")?;
+
+    if json {
+        println!(
+            "{{\n  \"window_id\": \"{}\",\n  \"tokens_listed_ac\": \"{}\",\n  \"price_usd_cents\": {},\n  \"seller_payout_usd_cents\": {},\n  \"registration_days\": {},\n  \"min_listing_ac\": {},\n  \"eligible_sellers\": \"Stage I investors only\",\n  \"abyss_obligation\": \"none\",\n  \"status\": \"quote only; submit intent via website during registration phase\"\n}}",
+            window.id, listing.tokens_to_list, window.price_usd_cents,
+            payout, window.registration_days, window.min_listing_ac()
+        );
+        return Ok(());
+    }
+
+    println!("ABYSS Investor Secondary Window — listing quote");
+    println!("window             : {} ({})", window.name, window.id);
+    println!("tokens_to_list     : {}", listing.tokens_to_list);
+    println!("price              : {}", usd_cents_to_string(window.price_usd_cents));
+    println!("seller_payout      : {}", usd_cents_to_string(payout));
+    println!("registration_phase : {} days to submit intent", window.registration_days);
+    println!("sales_phase        : open until all listed tokens are sold");
+    println!("min_listing        : {} AC (50% of Stage I slot)", window.min_listing_ac());
+    println!("abyss_obligation   : NONE — P2P facilitated market");
+    println!("status             : quote only; submit intent via website during registration phase");
 
     Ok(())
 }
 
-// ── presale quote ──
+// ── presale quote ─────────────────────────────────────────────────────────────
 
 fn quote_presale(args: Vec<String>) -> Result<(), String> {
     let request = PresaleQuoteRequest::parse(args)?;
     let plan = TokenomicsPlan::abyss_default();
-    plan.validate()
-        .map_err(|err| format!("invalid tokenomics plan: {err:?}"))?;
-    let round = plan
-        .sale_round(&request.round_id)
+    plan.validate().map_err(|err| format!("invalid tokenomics plan: {err:?}"))?;
+    let round = plan.sale_round(&request.round_id)
         .ok_or_else(|| format!("unknown sale round '{}'", request.round_id))?;
     let investor = InvestorProfile {
         investor_id: request.investor_id,
@@ -280,65 +211,23 @@ impl PresaleQuoteRequest {
             let (key, value) = arg.split_once('=')
                 .ok_or_else(|| format!("invalid argument '{arg}', expected --key=value"))?;
             match key {
-                "--investor"   => investor_id = value.to_string(),
+                "--investor"     => investor_id = value.to_string(),
                 "--jurisdiction" => jurisdiction = value.to_string(),
-                "--round"      => round_id = value.to_string(),
-                "--amount"     => amount = Some(parse_usd_to_cents(value).map_err(|e| format!("invalid --amount: {e:?}"))?),
-                "--max"        => max = parse_usd_to_cents(value).map_err(|e| format!("invalid --max: {e:?}"))?,
+                "--round"        => round_id = value.to_string(),
+                "--amount"       => amount = Some(parse_usd_to_cents(value).map_err(|e| format!("invalid --amount: {e:?}"))?),
+                "--max"          => max = parse_usd_to_cents(value).map_err(|e| format!("invalid --max: {e:?}"))?,
                 _ => return Err(format!("unknown argument '{key}'")),
             }
         }
-        Ok(Self { investor_id, jurisdiction, round_id,
+        Ok(Self {
+            investor_id, jurisdiction, round_id,
             contribution_usd_cents: amount.ok_or("missing --amount=<usd>")?,
-            max_contribution_usd_cents: max, kyc_approved, professional, json })
+            max_contribution_usd_cents: max, kyc_approved, professional, json,
+        })
     }
 }
 
-// ── presale secondary listing (formerly buyback) ──
-
-fn quote_secondary_listing(args: Vec<String>) -> Result<(), String> {
-    let mut investor_id = "demo-investor".to_string();
-    let mut tokens_ac: Option<u64> = None;
-    let mut stage1 = true;
-    let mut json = false;
-    for arg in args {
-        if arg == "--json" { json = true; continue; }
-        if arg == "--not-stage1" { stage1 = false; continue; }
-        let (key, value) = arg.split_once('=')
-            .ok_or_else(|| format!("invalid argument '{arg}', expected --key=value"))?;
-        match key {
-            "--investor" => investor_id = value.to_string(),
-            "--tokens" => tokens_ac = Some(value.parse::<u64>().map_err(|_| format!("invalid --tokens value '{value}'"))?),
-            _ => return Err(format!("unknown argument '{key}'")),
-        }
-    }
-    let tokens_ac = tokens_ac.ok_or("missing --tokens=<ac amount>")?;
-    let window = InvestorSecondaryWindow::abyss_default();
-    let listing = SecondaryListing::new(&investor_id, tokens_ac, stage1)
-        .map_err(|e| format!("invalid listing: {e:?}"))?;
-    window.validate_listing(&listing)
-        .map_err(|e| format!("secondary listing rejected: {e:?}"))?;
-    let payout = window.seller_payout_usd_cents(listing.tokens_to_list)
-        .ok_or("payout calculation overflow")?;
-    if json {
-        println!("{{\n  \"window_id\": \"{}\",\n  \"window_name\": \"{}\",\n  \"investor_id\": \"{}\",\n  \"tokens_ac\": \"{}\",\n  \"price_usd_cents\": {},\n  \"seller_payout_usd_cents\": {},\n  \"min_listing_ac\": {},\n  \"status\": \"quote only; facilitated P2P secondary market, not an ABYSS buyback\"\n}}",
-            window.id, json_escape(window.name), json_escape(&investor_id),
-            listing.tokens_to_list, window.price_usd_cents, payout, window.min_listing_ac());
-        return Ok(());
-    }
-    println!("ABYSS investor secondary window quote");
-    println!("window: {} ({})", window.name, window.id);
-    println!("investor_id: {investor_id}");
-    println!("tokens_to_list: {}", listing.tokens_to_list);
-    println!("listing_price: {}", usd_cents_to_string(window.price_usd_cents));
-    println!("seller_payout: {}", usd_cents_to_string(payout));
-    println!("min_listing: {} AC ({}% of Stage I slot)", window.min_listing_ac(), window.min_listing_bps as f64 / 100.0);
-    println!("registration_days: {}", window.registration_days);
-    println!("status: quote only; facilitated P2P secondary market, not an ABYSS buyback");
-    Ok(())
-}
-
-// ── presale dex-quote ──
+// ── presale dex-quote ─────────────────────────────────────────────────────────
 
 fn quote_dex_final_sale(args: Vec<String>) -> Result<(), String> {
     let mut amount = None;
@@ -354,7 +243,8 @@ fn quote_dex_final_sale(args: Vec<String>) -> Result<(), String> {
     }
     let amount = amount.ok_or("missing --amount=<usd>")?;
     let dex_sale = DexFinalSale::abyss_default();
-    let tokens = dex_sale.tokens_for_usd_cents(amount).map_err(|e| format!("dex quote rejected: {e:?}"))?;
+    let tokens = dex_sale.tokens_for_usd_cents(amount)
+        .map_err(|e| format!("dex quote rejected: {e:?}"))?;
     if json {
         println!("{{\n  \"sale_id\": \"{}\",\n  \"sale_name\": \"{}\",\n  \"contribution_usd_cents\": {},\n  \"price_usd_cents\": {},\n  \"token_amount_ac\": \"{}\",\n  \"venue\": \"ABYSS DEX (test orders)\",\n  \"status\": \"quote only; executed via live DEX order matching, not this CLI\"\n}}",
             dex_sale.id, dex_sale.name, amount, dex_sale.price_usd_cents, tokens);
@@ -370,32 +260,35 @@ fn quote_dex_final_sale(args: Vec<String>) -> Result<(), String> {
     Ok(())
 }
 
-// ── tokenomics ──
+// ── tokenomics ────────────────────────────────────────────────────────────────
 
 fn print_tokenomics(args: Vec<String>) -> Result<(), String> {
     let json = args.iter().any(|a| a == "--json");
     let plan = TokenomicsPlan::abyss_default();
     plan.validate().map_err(|err| format!("invalid tokenomics plan: {err:?}"))?;
-    let secondary = InvestorSecondaryWindow::abyss_default();
+    let window   = InvestorSecondaryWindow::abyss_default();
     let dex_sale = DexFinalSale::abyss_default();
 
     if json {
         let allocations_json: Vec<String> = plan.allocations.iter().map(|a| {
-            format!("    {{ \"name\": \"{}\", \"basis_points\": {}, \"amount_ac\": \"{}\" }}", json_escape(a.name), a.basis_points, a.amount())
+            format!("    {{ \"name\": \"{}\", \"basis_points\": {}, \"amount_ac\": \"{}\" }}",
+                json_escape(a.name), a.basis_points, a.amount())
         }).collect();
         let rounds_json: Vec<String> = plan.sale_rounds.iter().map(|r| {
             format!("    {{ \"id\": \"{}\", \"name\": \"{}\", \"token_cap_ac\": \"{}\", \"price_usd_cents\": {}, \"minimum_ticket_usd\": {}, \"raise_cap_usd_cents\": {} }}",
-                r.id, json_escape(r.name), r.token_cap, r.price_usd_cents, r.minimum_ticket_usd, r.raise_cap_usd_cents())
+                r.id, json_escape(r.name), r.token_cap, r.price_usd_cents,
+                r.minimum_ticket_usd, r.raise_cap_usd_cents())
         }).collect();
         let total = plan.total_sale_cap_usd_cents().unwrap_or(0);
         println!(
-            "{{\n  \"symbol\": \"{}\",\n  \"max_supply_ac\": \"{}\",\n  \"team_reserve_ac\": \"{}\",\n  \"public_sale_ac\": \"{}\",\n  \"allocations\": [\n{}\n  ],\n  \"sale_rounds\": [\n{}\n  ],\n  \"investor_secondary_window\": {{ \"id\": \"{}\", \"name\": \"{}\", \"price_usd_cents\": {}, \"min_listing_ac\": {}, \"registration_days\": {} }},\n  \"final_sale_dex\": {{ \"id\": \"{}\", \"name\": \"{}\", \"price_usd_cents\": {}, \"note\": \"variable supply, executed via DEX test orders\" }},\n  \"maximum_sale_raise_usd_cents\": {}\n}}",
+            "{{\n  \"symbol\": \"{}\",\n  \"max_supply_ac\": \"{}\",\n  \"team_reserve_ac\": \"{}\",\n  \"public_sale_ac\": \"{}\",\n  \"allocations\": [\n{}\n  ],\n  \"sale_rounds\": [\n{}\n  ],\n  \"investor_secondary_window\": {{ \"id\": \"{}\", \"name\": \"{}\", \"price_usd_cents\": {}, \"registration_days\": {}, \"min_listing_ac\": {}, \"abyss_obligation\": \"none\" }},\n  \"final_sale_dex\": {{ \"id\": \"{}\", \"name\": \"{}\", \"price_usd_cents\": {}, \"note\": \"variable supply, executed via DEX test orders\" }},\n  \"maximum_sale_raise_usd_cents\": {}\n}}",
             plan.symbol, plan.max_supply, plan.team_reserve_amount(),
             plan.allocation_amount("Public sale and liquidity formation").unwrap_or(Coin::ZERO),
             allocations_json.join(",\n"), rounds_json.join(",\n"),
-            secondary.id, json_escape(secondary.name), secondary.price_usd_cents,
-            secondary.min_listing_ac(), secondary.registration_days,
-            dex_sale.id, dex_sale.name, dex_sale.price_usd_cents, total,
+            window.id, window.name, window.price_usd_cents,
+            window.registration_days, window.min_listing_ac(),
+            dex_sale.id, dex_sale.name, dex_sale.price_usd_cents,
+            total,
         );
         return Ok(());
     }
@@ -404,25 +297,42 @@ fn print_tokenomics(args: Vec<String>) -> Result<(), String> {
     println!("symbol: {}", plan.symbol);
     println!("max_supply: {}", plan.max_supply);
     println!("team_reserve: {}", plan.team_reserve_amount());
-    println!("public_sale: {}", plan.allocation_amount("Public sale and liquidity formation").unwrap_or(Coin::ZERO));
+    println!("public_sale: {}",
+        plan.allocation_amount("Public sale and liquidity formation").unwrap_or(Coin::ZERO));
     println!();
     println!("allocations:");
-    for a in &plan.allocations { println!("  - {}: {} bps / {}", a.name, a.basis_points, a.amount()); }
+    for a in &plan.allocations {
+        println!("  - {}: {} bps / {}", a.name, a.basis_points, a.amount());
+    }
     println!();
     println!("sale_rounds:");
-    for r in &plan.sale_rounds { println!("  - {} [{}]: cap {}, price {}, min ${}, raise cap {}", r.name, r.id, r.token_cap, usd_cents_to_string(r.price_usd_cents), r.minimum_ticket_usd, usd_cents_to_string(r.raise_cap_usd_cents())); }
+    for r in &plan.sale_rounds {
+        println!("  - {} [{}]: cap {}, price {}, min ${}, raise cap {}",
+            r.name, r.id, r.token_cap,
+            usd_cents_to_string(r.price_usd_cents),
+            r.minimum_ticket_usd,
+            usd_cents_to_string(r.raise_cap_usd_cents()));
+    }
     println!();
     println!("special_stages:");
-    println!("  - {} [{}]: min listing {} AC, price {}, registration {} days (P2P secondary, not ABYSS buyback)", secondary.name, secondary.id, secondary.min_listing_ac(), usd_cents_to_string(secondary.price_usd_cents), secondary.registration_days);
-    println!("  - {} [{}]: variable supply, price {} (executed via ABYSS DEX test orders)", dex_sale.name, dex_sale.id, usd_cents_to_string(dex_sale.price_usd_cents));
+    println!("  - {} [{}]: price {}, registration {} days, min listing {} AC",
+        window.name, window.id,
+        usd_cents_to_string(window.price_usd_cents),
+        window.registration_days,
+        window.min_listing_ac());
+    println!("    sellers: Stage I investors only | buyers: any participant | ABYSS obligation: NONE");
+    println!("  - {} [{}]: variable supply, price {} (executed via ABYSS DEX test orders)",
+        dex_sale.name, dex_sale.id,
+        usd_cents_to_string(dex_sale.price_usd_cents));
     if let Some(total) = plan.total_sale_cap_usd_cents() {
         println!();
-        println!("maximum_sale_raise: {} (standard rounds only; excludes secondary window and variable dex sale)", usd_cents_to_string(total));
+        println!("maximum_sale_raise: {} (standard rounds only; excludes secondary window and variable dex sale)",
+            usd_cents_to_string(total));
     }
     Ok(())
 }
 
-// ── vesting ──
+// ── vesting ───────────────────────────────────────────────────────────────────
 
 fn print_vesting(args: Vec<String>) -> Result<(), String> {
     let json = args.iter().any(|a| a == "--json");
@@ -433,176 +343,134 @@ fn print_vesting(args: Vec<String>) -> Result<(), String> {
                 year, vesting.unlocked_in_year(year), vesting.total_unlocked(year * 12))
         }).collect();
         println!("{{\n  \"tranche_a_total_ac\": \"{}\",\n  \"tranche_a_months\": {},\n  \"tranche_b_total_ac\": \"{}\",\n  \"tranche_b_months\": {},\n  \"total_ac\": \"{}\",\n  \"by_year\": [\n{}\n  ]\n}}",
-            vesting.tranche_a_total, vesting.tranche_a_months, vesting.tranche_b_total, vesting.tranche_b_months, vesting.total(), years.join(",\n"));
+            vesting.tranche_a_total, vesting.tranche_a_months,
+            vesting.tranche_b_total, vesting.tranche_b_months,
+            vesting.total(), years.join(",\n"));
         return Ok(());
     }
     println!("ABYSS team reserve vesting");
-    println!("tranche_a: {} over {} months (linear, no cliff)", vesting.tranche_a_total, vesting.tranche_a_months);
-    println!("tranche_b: {} over {} months (linear, no cliff, capped at {} / 12 months)", vesting.tranche_b_total, vesting.tranche_b_months, vesting.tranche_b_annual_cap);
+    println!("tranche_a: {} over {} months (linear, no cliff)",
+        vesting.tranche_a_total, vesting.tranche_a_months);
+    println!("tranche_b: {} over {} months (linear, no cliff, capped at {} / 12 months)",
+        vesting.tranche_b_total, vesting.tranche_b_months, vesting.tranche_b_annual_cap);
     println!("total: {}", vesting.total());
     println!();
     println!("unlock_by_year:");
     for year in 1..=5u16 {
-        println!("  year {}: +{} this year, {} cumulative", year, vesting.unlocked_in_year(year), vesting.total_unlocked(year * 12));
+        println!("  year {}: +{} this year, {} cumulative",
+            year, vesting.unlocked_in_year(year), vesting.total_unlocked(year * 12));
     }
     Ok(())
 }
 
-// ── account ──
+// ── social ────────────────────────────────────────────────────────────────────
 
-fn create_account(label: &str, data_dir: &PathBuf) {
-    let account = WalletAccount::generate(label);
-    let stored = StoredAccount::from_account(&account, None);
-    match save_account(data_dir, &stored) {
-        Ok(()) => {
-            println!("ABYSS dev account created");
-            println!("label: {}", account.label());
-            println!("address: {}", account.address());
-            println!("public_key: {}", account.public_key());
-            println!("saved_to: {}", data::account_path(data_dir, label).display());
-            println!("agent_permissions: {:?}", account.agent_policy().permissions());
-            println!("warning: dev account only; use 'account import --seed=...' for reproducible signing keys");
-        }
-        Err(err) => eprintln!("failed to save account: {err}"),
+fn run_social_demo() -> Result<(), String> {
+    let now = now_ms();
+    let mut feed = DevFeed::new();
+    let alice = "abyss1dev_alice";
+    let bob   = "abyss1dev_bob";
+
+    let post1 = feed.publish(alice, "Hello ABYSS. The future of private social is here.", Visibility::Attributed, now)
+        .map_err(|e| format!("post failed: {e:?}"))?;
+    let post2 = feed.publish(bob, "This message is mine. The network cannot prove it.", Visibility::Shielded, now + 1_000)
+        .map_err(|e| format!("post failed: {e:?}"))?;
+    let post3 = feed.reply(alice, "Building in public. Transacting in private.", Visibility::Attributed, now + 2_000, post1)
+        .map_err(|e| format!("reply failed: {e:?}"))?;
+
+    let agent_policy = AgentSocialPolicy::curator_default();
+    let mut agent_window = AgentActivityWindow::new(now);
+    agent_window.record_post(&agent_policy, AgentSocialAction::Repost, now + 3_000)
+        .map_err(|e| format!("agent action rejected: {e:?}"))?;
+    for i in 0..9 {
+        let _ = agent_window.record_post(&agent_policy, AgentSocialAction::Repost, now + 4_000 + i);
     }
+    let rate_limit_result = agent_window.record_post(&agent_policy, AgentSocialAction::Repost, now + 5_000);
+
+    println!("ABYSS social layer -- devnet demonstration");
+    println!("-----------------------------------------");
+    println!();
+    println!("feed: {} posts", feed.len());
+    println!();
+    println!("post #{}: [attributed]", post1.0);
+    if let Some(p) = feed.get(post1) {
+        println!("  author : {}", p.author);
+        println!("  body   : {}", p.body);
+    }
+    println!();
+    println!("post #{}: [shielded]", post2.0);
+    if let Some(p) = feed.get(post2) {
+        println!("  author : <hidden -- only the author and view-key holders can see this>");
+        println!("  body   : {}", p.body);
+        println!("  author_visible_to(alice): {}", p.author_visible_to(alice, &Default::default()));
+        println!("  author_visible_to(bob):   {}", p.author_visible_to(bob, &Default::default()));
+    }
+    println!();
+    println!("post #{}: [reply to #{}]", post3.0, post1.0);
+    if let Some(p) = feed.get(post3) {
+        println!("  author : {}", p.author);
+        println!("  body   : {}", p.body);
+    }
+    println!("  replies to #{}: {} found", post1.0, feed.replies_to(post1).len());
+    println!();
+    println!("ai agent (curator policy):");
+    println!("  can_post   : {}", agent_policy.can_post);
+    println!("  can_repost : {}", agent_policy.can_repost);
+    println!("  rate_limit : {} reposts / {} seconds", agent_policy.max_posts_per_window, agent_policy.rate_window_seconds);
+    match rate_limit_result {
+        Err(e) => println!("  rate limit enforced: {:?}", e),
+        Ok(()) => println!("  (rate limit not yet hit)"),
+    }
+    println!();
+    println!("note: this is an in-memory devnet feed.");
+    println!("      production storage is content-addressed and replicated (Phase 6).");
+    Ok(())
 }
 
-fn import_account(label: String, args: Vec<String>) -> Result<(), String> {
-    let data_dir = parse_data_dir(&args);
-    let mut seed = None;
-    for arg in args {
-        if let Some(value) = arg.strip_prefix("--seed=") {
-            seed = Some(value.to_string());
+fn social_post(args: Vec<String>) -> Result<(), String> {
+    let mut author = String::new();
+    let mut body = String::new();
+    let mut shielded = false;
+    for arg in &args {
+        if arg == "--shielded" { shielded = true; continue; }
+        let (key, value) = arg.split_once('=')
+            .ok_or_else(|| format!("invalid argument '{arg}', expected --key=value"))?;
+        match key {
+            "--author" => author = value.to_string(),
+            "--body"   => body = value.to_string(),
+            _ => return Err(format!("unknown argument '{key}'")),
         }
     }
-    let seed = seed.ok_or("missing --seed=<dev seed bytes>")?;
-    let account = WalletAccount::from_dev_seed(&label, &seed);
-    let stored = StoredAccount::from_account(&account, Some(seed));
-    save_account(&data_dir, &stored)?;
-    println!("ABYSS dev account imported");
+    if author.is_empty() { return Err("missing --author=<address>".to_string()); }
+    if body.is_empty()   { return Err("missing --body=<text>".to_string()); }
+    let visibility = if shielded { Visibility::Shielded } else { Visibility::Attributed };
+    let mut feed = DevFeed::new();
+    let id = feed.publish(&author, &body, visibility, now_ms())
+        .map_err(|e| format!("post rejected: {e:?}"))?;
+    println!("ABYSS social post");
+    println!("post_id    : {}", id.0);
+    println!("author     : {author}");
+    println!("visibility : {}", if shielded { "shielded" } else { "attributed" });
+    println!("body       : {body}");
+    println!("status     : published to devnet feed (in-memory)");
+    Ok(())
+}
+
+// ── account ───────────────────────────────────────────────────────────────────
+
+fn create_account(label: &str) {
+    let account = WalletAccount::generate(label);
+    println!("ABYSS dev account created");
     println!("label: {}", account.label());
     println!("address: {}", account.address());
     println!("public_key: {}", account.public_key());
-    println!("saved_to: {}", data::account_path(&data_dir, &label).display());
-    Ok(())
+    println!("agent_permissions: {:?}", account.agent_policy().permissions());
+    println!("warning: dev account only; production key storage is not implemented yet");
 }
 
-// ── chain persistence ──
+// ── devnet ────────────────────────────────────────────────────────────────────
 
-fn chain_init(args: Vec<String>) -> Result<(), String> {
-    let data_dir = parse_data_dir(&args);
-    let chain = init_devnet_chain(&data_dir, now_ms()).map_err(|e| e.to_string())?;
-    println!("ABYSS chain initialized");
-    println!("data_dir: {}", data_dir.display());
-    println!("chain_id: {}", chain.config().chain_id);
-    println!("height: {}", chain.height());
-    println!("tip_hash: {}", hashing::hex(&chain.tip_hash()));
-    Ok(())
-}
-
-fn chain_status(args: Vec<String>) -> Result<(), String> {
-    let data_dir = parse_data_dir(&args);
-    let path = data::chain_path(&data_dir);
-    let chain = load_chain(&path).map_err(|e| format!("failed to load {}: {e}", path.display()))?;
-    println!("ABYSS chain status");
-    println!("data_dir: {}", data_dir.display());
-    println!("chain_id: {}", chain.config().chain_id);
-    println!("height: {}", chain.height());
-    println!("tip_hash: {}", hashing::hex(&chain.tip_hash()));
-    Ok(())
-}
-
-// ── wallet ──
-
-fn wallet_list(args: Vec<String>) -> Result<(), String> {
-    let data_dir = parse_data_dir(&args);
-    let accounts = list_accounts(&data_dir)?;
-    println!("ABYSS wallet accounts ({})", accounts.len());
-    if accounts.is_empty() {
-        println!("(none — try: account new alice | account import alice --seed=abyss:dev:alice)");
-        return Ok(());
-    }
-    for account in accounts {
-        let seed_note = if account.dev_seed.is_some() { "signable" } else { "view-only" };
-        println!("  - {}: {} [{seed_note}]", account.label, account.address);
-    }
-    Ok(())
-}
-
-fn wallet_balance(args: Vec<String>) -> Result<(), String> {
-    let data_dir = parse_data_dir(&args);
-    let mut address = None;
-    let mut label = None;
-    for arg in args {
-        if let Some(value) = arg.strip_prefix("--address=") {
-            address = Some(value.to_string());
-        } else if let Some(value) = arg.strip_prefix("--label=") {
-            label = Some(value.to_string());
-        }
-    }
-    let address = match (address, label) {
-        (Some(addr), _) => addr,
-        (None, Some(lbl)) => load_account(&data_dir, &lbl)?.address,
-        (None, None) => return Err("missing --address=<addr> or --label=<name>".to_string()),
-    };
-    let path = data::chain_path(&data_dir);
-    let chain = load_chain(&path).map_err(|e| format!("failed to load chain: {e}"))?;
-    let parsed = Address::new(address.clone()).map_err(|e| e.to_string())?;
-    println!("ABYSS wallet balance");
-    println!("address: {address}");
-    println!("balance: {}", chain.balance_of(&parsed));
-    println!("nonce: {}", chain.next_nonce(&parsed));
-    Ok(())
-}
-
-fn wallet_send(args: Vec<String>) -> Result<(), String> {
-    let data_dir = parse_data_dir(&args);
-    let mut from = None;
-    let mut to = None;
-    let mut amount_ac = None;
-    let mut fee_ac = 0_u64;
-    for arg in args {
-        if let Some(value) = arg.strip_prefix("--from=") {
-            from = Some(value.to_string());
-        } else if let Some(value) = arg.strip_prefix("--to=") {
-            to = Some(value.to_string());
-        } else if let Some(value) = arg.strip_prefix("--amount=") {
-            amount_ac = Some(value.parse::<u64>().map_err(|_| format!("invalid --amount '{value}'"))?);
-        } else if let Some(value) = arg.strip_prefix("--fee=") {
-            fee_ac = value.parse::<u64>().map_err(|_| format!("invalid --fee '{value}'"))?;
-        }
-    }
-    let from_label = from.ok_or("missing --from=<account label>")?;
-    let to_addr = to.ok_or("missing --to=<address>")?;
-    let amount_ac = amount_ac.ok_or("missing --amount=<ac>")?;
-    let stored = load_account(&data_dir, &from_label)?;
-    let account = stored.load_wallet()?;
-    let to = Address::new(to_addr).map_err(|e| e.to_string())?;
-    let path = data::chain_path(&data_dir);
-    let mut chain = load_chain(&path).map_err(|e| format!("failed to load chain: {e}"))?;
-    let tx = account.create_payment(
-        to,
-        Coin::from_ac(amount_ac).ok_or("invalid amount")?,
-        Coin::from_ac(fee_ac).ok_or("invalid fee")?,
-        chain.next_nonce(&account.address()),
-    );
-    chain
-        .produce_block("abyss-validator-1", now_ms(), vec![tx])
-        .map_err(|e| format!("transaction rejected: {e:?}"))?;
-    save_chain(&chain, &path).map_err(|e| e.to_string())?;
-    println!("ABYSS wallet send");
-    println!("from: {} ({})", from_label, account.address());
-    println!("amount: {}", Coin::from_ac(amount_ac).unwrap());
-    println!("new_height: {}", chain.height());
-    println!("tip_hash: {}", hashing::hex(&chain.tip_hash()));
-    Ok(())
-}
-
-// ── devnet ──
-
-fn run_devnet(args: Vec<String>) -> Result<(), String> {
-    let data_dir = parse_data_dir(&args);
-    let persist = args.iter().any(|a| a == "--persist");
+fn run_devnet() -> Result<(), String> {
     let treasury_account = WalletAccount::from_dev_seed("treasury", "abyss:genesis:treasury");
     let alice_account    = WalletAccount::from_dev_seed("alice", "abyss:dev:alice");
     let bob_account      = WalletAccount::from_dev_seed("bob", "abyss:dev:bob");
@@ -623,7 +491,7 @@ fn run_devnet(args: Vec<String>) -> Result<(), String> {
         chain.next_nonce(&treasury),
     );
     let mut mempool = Mempool::new();
-    mempool.insert(tx1).map_err(|err| format!("failed to insert tx1 into mempool: {err:?}"))?;
+    mempool.insert(tx1).map_err(|err| format!("failed to insert tx1: {err:?}"))?;
     chain.produce_block("abyss-validator-1", now_ms(), mempool.drain_for_block(128))
         .map_err(|err| format!("failed to produce block 1: {err:?}"))?;
 
@@ -637,7 +505,7 @@ fn run_devnet(args: Vec<String>) -> Result<(), String> {
         Coin::from_micro_ac(2_500).ok_or("invalid fee")?,
         chain.next_nonce(&alice),
     ).map_err(|err| format!("agent policy rejected payment: {err:?}"))?;
-    mempool.insert(tx2).map_err(|err| format!("failed to insert tx2 into mempool: {err:?}"))?;
+    mempool.insert(tx2).map_err(|err| format!("failed to insert tx2: {err:?}"))?;
     chain.produce_block("abyss-validator-1", now_ms(), mempool.drain_for_block(128))
         .map_err(|err| format!("failed to produce block 2: {err:?}"))?;
 
@@ -651,42 +519,19 @@ fn run_devnet(args: Vec<String>) -> Result<(), String> {
     println!("treasury: {}", chain.balance_of(&treasury));
     println!("alice: {}", chain.balance_of(&alice));
     println!("bob: {}", chain.balance_of(&bob));
-
-    if persist {
-        let _ = std::fs::create_dir_all(&data_dir);
-        for (_label, account, seed) in [
-            ("treasury", &treasury_account, "abyss:genesis:treasury"),
-            ("alice", &alice_account, "abyss:dev:alice"),
-            ("bob", &bob_account, "abyss:dev:bob"),
-        ] {
-            save_account(
-                &data_dir,
-                &StoredAccount::from_account(account, Some(seed.to_string())),
-            )?;
-        }
-        save_chain(&chain, data::chain_path(&data_dir)).map_err(|e| e.to_string())?;
-        println!("persisted_to: {}", data_dir.display());
-    }
     Ok(())
 }
 
-// ── help ──
+// ── help ──────────────────────────────────────────────────────────────────────
 
 fn print_help() {
     println!("ABYSS Node");
     println!();
     println!("Usage:");
-    println!("  abyss-node account new [label] [--data-dir=<path>]");
-    println!("  abyss-node account import <label> --seed=<seed> [--data-dir=<path>]");
-    println!("  abyss-node chain init [--data-dir=<path>]");
-    println!("  abyss-node chain status [--data-dir=<path>]");
-    println!("  abyss-node wallet list [--data-dir=<path>]");
-    println!("  abyss-node wallet balance --address=<addr> | --label=<name> [--data-dir=<path>]");
-    println!("  abyss-node wallet send --from=<label> --to=<addr> --amount=<ac> [--fee=<ac>] [--data-dir=<path>]");
-    println!("  abyss-node devnet [--persist] [--data-dir=<path>]");
+    println!("  abyss-node account new [label]");
+    println!("  abyss-node devnet");
     println!("  abyss-node presale quote --amount=<usd> [--round=<id>] [--kyc-approved] [--professional] [--json]");
-    println!("  abyss-node presale secondary-listing --tokens=<ac amount> [--investor=<id>] [--json]");
-    println!("  abyss-node presale buyback ...          (alias for secondary-listing)");
+    println!("  abyss-node presale secondary-window [--info] [--tokens=<ac>] [--json]");
     println!("  abyss-node presale dex-quote --amount=<usd> [--json]");
     println!("  abyss-node tokenomics [--json]");
     println!("  abyss-node vesting [--json]");
@@ -695,6 +540,7 @@ fn print_help() {
     println!("  abyss-node help");
     println!();
     println!("Sale round ids: sale-to-investors, pre-sale, public-stage-1, public-stage-2, public-stage-3");
+    println!("Secondary window: Stage I investors only, min 250,000 AC, fixed $3.00, P2P facilitated");
 }
 
 fn now_ms() -> u64 {
