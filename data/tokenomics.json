@@ -3,6 +3,38 @@
   "max_supply_ac": 55000000,
   "team_reserve_ac": 30000000,
   "public_sale_ac": 25000000,
+  "allocations": [
+    {
+      "name": "Validator rewards and network security",
+      "basis_points": 1500,
+      "amount_ac": 8250000
+    },
+    {
+      "name": "Ecosystem grants, apps, audits, bug bounties",
+      "basis_points": 1000,
+      "amount_ac": 5500000
+    },
+    {
+      "name": "Foundation treasury with long vesting",
+      "basis_points": 1000,
+      "amount_ac": 5500000
+    },
+    {
+      "name": "Core contributors with long vesting",
+      "basis_points": 1000,
+      "amount_ac": 5500000
+    },
+    {
+      "name": "DEX liquidity reserve",
+      "basis_points": 1000,
+      "amount_ac": 5250000
+    },
+    {
+      "name": "Public sale and liquidity formation",
+      "basis_points": 4500,
+      "amount_ac": 25000000
+    }
+  ],
   "sale_rounds": [
     {
       "id": "sale-to-investors",
@@ -49,13 +81,15 @@
     "id": "investor-secondary-window",
     "name": "Investor Secondary Window",
     "price_usd_cents": 300,
+    "registration_days": 14,
     "min_listing_ac": 250000,
-    "registration_days": 14
+    "abyss_obligation": "none"
   },
   "final_sale_dex": {
     "id": "final-sale-dex",
     "name": "Final Sale (ABYSS DEX)",
-    "price_usd_cents": 500
+    "price_usd_cents": 500,
+    "note": "variable supply, executed via DEX test orders"
   },
   "maximum_sale_raise_usd_cents": 9300000000,
   "_source": "abyss-node tokenomics --json"

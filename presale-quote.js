@@ -31,8 +31,21 @@
     });
   }
 
+  function parseAc(value) {
+    if (typeof value === 'number') return value;
+    const cleaned = String(value || '')
+      .replace(/AC/i, '')
+      .replace(/,/g, '')
+      .trim();
+    const amount = Number(cleaned);
+    return Number.isFinite(amount) ? amount : null;
+  }
+
   function formatAc(amountAc) {
-    return amountAc.toLocaleString('en-US') + ' AC';
+    return Number(amountAc).toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 8,
+    }) + ' AC';
   }
 
   function findRound(tokenomics, roundId) {
@@ -59,10 +72,11 @@
       };
     }
 
-    const tokensAc = Math.floor(
-      (contributionCents * 100_000_000) / round.price_usd_cents
-    );
-    const capAc = Number(round.token_cap_ac);
+    const tokensAc = contributionCents / round.price_usd_cents;
+    const capAc = parseAc(round.token_cap_ac);
+    if (capAc === null) {
+      return { ok: false, error: 'Invalid round token cap in tokenomics data.' };
+    }
     if (tokensAc > capAc) {
       return { ok: false, error: 'Amount exceeds round token cap.' };
     }
@@ -103,6 +117,7 @@
     parseUsdToCents,
     formatUsd,
     formatAc,
+    parseAc,
     quotePresale,
     loadTokenomics,
   };

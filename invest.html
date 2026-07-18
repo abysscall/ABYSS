@@ -515,6 +515,20 @@
 
 </div><!-- /page -->
 
+<!-- Netlify form detection for investor intents -->
+<form name="investor-intent" netlify netlify-honeypot="bot-field" hidden>
+  <input name="name">
+  <input name="email">
+  <input name="telegram">
+  <input name="wallet">
+  <input name="amount">
+  <input name="reference">
+  <input name="quote_tokens_ac">
+  <input name="quote_price_usd">
+  <input name="bot-field">
+</form>
+
+<script src="form-submit.js"></script>
 <script src="presale-quote.js"></script>
 <script>
   // Wallet addresses per currency
@@ -618,12 +632,14 @@
   document.getElementById('a4').addEventListener('change', renderQuote);
 
   // Form validation & submission
-  function submitForm() {
+  async function submitForm() {
     const name   = document.getElementById('f_name').value.trim();
     const email  = document.getElementById('f_email').value.trim();
+    const tg     = document.getElementById('f_tg').value.trim();
     const wallet = document.getElementById('f_wallet').value.trim();
     const amount = document.getElementById('f_amount').value.trim();
     const checks = ['a1','a2','a3','a4','a5'].map(id => document.getElementById(id).checked);
+    const btn = document.getElementById('submitBtn');
 
     if (!name || !email || !wallet) {
       alert('Please fill in all required fields (Name, Email, Wallet Address).');
@@ -646,16 +662,38 @@
       return;
     }
 
-    // Generate reference
     const ref = 'ABYSS-INV-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2,4).toUpperCase();
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    if (!AbyssForms.isLocalHost()) {
+      try {
+        await AbyssForms.submitNetlifyForm('investor-intent', {
+          name,
+          email,
+          telegram: tg,
+          wallet,
+          amount,
+          reference: ref,
+          quote_tokens_ac: AbyssPresaleQuote.formatAc(quote.tokenAmountAc),
+          quote_price_usd: AbyssPresaleQuote.formatUsd(quote.priceUsdCents),
+        });
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Submit Intent & Confirm Investment →';
+        alert('Could not submit your intent. Please try again or contact us on Telegram.');
+        console.error(err);
+        return;
+      }
+    }
+
     document.getElementById('refCode').textContent =
       'Reference: ' + ref + ' | Quote: ' + AbyssPresaleQuote.formatAc(quote.tokenAmountAc) +
-      ' @ ' + AbyssPresaleQuote.formatUsd(quote.priceUsdCents) + '/AC';
+      ' @ ' + AbyssPresaleQuote.formatUsd(quote.priceUsdCents) + '/AC' +
+      (AbyssForms.isLocalHost() ? ' (local preview — submit on Netlify to notify the team)' : '');
 
-    document.getElementById('submitBtn').style.display = 'none';
+    btn.style.display = 'none';
     document.getElementById('successBox').classList.add('show');
-
-    // Scroll to success
     document.getElementById('successBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
