@@ -500,10 +500,13 @@
 
   /* --- NEWSLETTER --- */
   .newsletter-form {
-    display: flex;
-    gap: 0;
     max-width: 440px;
     margin: 2rem auto 0;
+  }
+  .newsletter-form form {
+    display: flex;
+    gap: 0;
+    width: 100%;
   }
   .newsletter-form input {
     flex: 1;
@@ -1352,9 +1355,16 @@
       <a href="#" class="social-btn">Whitepaper</a>
     </div>
     <div class="newsletter-form">
-      <input type="email" placeholder="your@email.com" id="emailInput">
-      <button onclick="submitEmail()">Notify Me</button>
+      <form id="newsletterForm" onsubmit="return submitEmail(event)">
+        <input type="email" name="email" placeholder="your@email.com" id="emailInput" required>
+        <button type="submit" id="emailBtn">Notify Me</button>
+      </form>
     </div>
+    <!-- Netlify form detection (required for JS-driven Netlify Forms) -->
+    <form name="newsletter" netlify netlify-honeypot="bot-field" hidden>
+      <input type="email" name="email">
+      <input name="bot-field">
+    </form>
     <div id="emailMsg" style="font-size:0.78rem; color:var(--accent3); margin-top:0.7rem; height:1.2em;"></div>
   </div>
 </section>
@@ -1376,6 +1386,7 @@
   DISCLAIMER: ABYSS tokens are not securities or investment products. Participation in the token sale carries risk. This website is for informational purposes only and does not constitute financial or investment advice. Always conduct your own research.
 </div>
 
+<script src="form-submit.js"></script>
 <script>
   // Animated counters
   function animCount(el, target, suffix, duration) {
@@ -1397,18 +1408,45 @@
     animCount(document.getElementById('cnt2'), 55000000, '', 2000);
   }, 500);
 
-  // Email submit
-  function submitEmail() {
-    const v = document.getElementById('emailInput').value;
+  // Email submit (Netlify Forms on production; friendly message locally)
+  async function submitEmail(event) {
+    event.preventDefault();
+    const input = document.getElementById('emailInput');
+    const btn = document.getElementById('emailBtn');
     const msg = document.getElementById('emailMsg');
+    const v = input.value.trim();
+
     if (!v || !v.includes('@')) {
       msg.style.color = 'var(--accent)';
       msg.textContent = '// Enter a valid email address';
-      return;
+      return false;
     }
-    msg.style.color = 'var(--accent3)';
-    msg.textContent = '// Registered. Welcome to the ABYSS.';
-    document.getElementById('emailInput').value = '';
+
+    btn.disabled = true;
+    msg.style.color = 'var(--dim)';
+    msg.textContent = '// Sending…';
+
+    if (AbyssForms.isLocalHost()) {
+      msg.style.color = 'var(--accent3)';
+      msg.textContent = '// Saved locally for preview. On Netlify this email will be stored in Forms.';
+      input.value = '';
+      btn.disabled = false;
+      return false;
+    }
+
+    try {
+      await AbyssForms.submitNetlifyForm('newsletter', { email: v });
+      msg.style.color = 'var(--accent3)';
+      msg.textContent = '// Registered. Welcome to the ABYSS.';
+      input.value = '';
+    } catch (err) {
+      msg.style.color = 'var(--accent)';
+      msg.textContent = '// Could not register. Try again or contact us on Telegram.';
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+    }
+    return false;
   }
 
   // Load page transition engine
