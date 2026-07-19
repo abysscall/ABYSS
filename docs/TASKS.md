@@ -1,7 +1,15 @@
 # ABYSS Tasks
 
+**Priority (ADR-0015):** independent ABYSS network + native AC. ERC-20 is not the
+product; interop later via bridges/wrapped assets. Prioritise native-network work
+(consensus, storage, RPC, shielded execution) over any token-contract work.
+
 ## Backlog
 
+- Native network track (in priority order): (1) Multi-validator BFT consensus, (2) persistent storage (RocksDB), (3) JSON-RPC node API.
+- Genesis Allocation Registry module (ADR-0016): Contribution Receipts → Genesis Root → Genesis Builder → first AC balances.
+- Rework investor site (index/invest/wallet.html) to the Genesis Allocation concept ("Contribute to ABYSS Genesis", "Reserve Native ABYSS Allocation", "Genesis Distribution"); keep USDT/USDC/BTC payment rails.
+- Legal review before accepting any contributions.
 - Compare `C:\Users\z-mir\abyss` with the current website and extract cold/multisig wallet UX ideas.
 - Migrate old newsletter subscribers from ABYSS-website backups if `subscribers.csv` / `abyss.db` are found.
 - Decide whether old folders should be archived or deleted after comparison.
