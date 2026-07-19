@@ -64,6 +64,8 @@ The primary rule is:
 
 | Mempool | ⏳ Pending | - | Pending |
 
+| Consensus | 🟡 In progress | - | Multi-validator BFT round engine (propose→prevote→precommit→commit, view change); needs p2p transport + chain integration |
+
 
 
 \---

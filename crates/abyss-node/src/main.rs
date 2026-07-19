@@ -1,6 +1,7 @@
 use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use abyss_consensus::{round, Validator, ValidatorId, ValidatorSet};
 use abyss_core::{hashing, Chain, ChainConfig, Coin, GenesisConfig, Mempool, Transaction};
 use abyss_social::{AgentActivityWindow, AgentSocialAction, AgentSocialPolicy, DevFeed, Visibility};
 use abyss_tokenomics::{
@@ -34,6 +35,11 @@ fn run() -> Result<(), String> {
             None => Err("missing account command".to_string()),
         },
         Some("devnet") => run_devnet(),
+        Some("bft") => match args.next().as_deref() {
+            Some("demo") => run_bft_demo(args.collect()),
+            Some(command) => Err(format!("unknown bft command '{command}'")),
+            None => Err("missing bft command. Try: bft demo [--validators=N] [--faulty=N]".to_string()),
+        },
         Some("presale") => match args.next().as_deref() {
             Some("quote")            => quote_presale(args.collect()),
             Some("secondary-window") => quote_secondary_window(args.collect()),
@@ -522,6 +528,80 @@ fn run_devnet() -> Result<(), String> {
     Ok(())
 }
 
+// ── bft demo ──────────────────────────────────────────────────────────────────
+//
+// Simulates a multi-validator BFT round reaching finality. `--faulty=N` marks
+// the last N validators as silent (Byzantine); the honest majority still commits
+// as long as more than 2/3 of voting power remains, otherwise the height stalls.
+fn run_bft_demo(args: Vec<String>) -> Result<(), String> {
+    let mut validators = 4_u64;
+    let mut faulty = 1_u64;
+    for arg in &args {
+        let (key, value) = arg.split_once('=').unwrap_or((arg.as_str(), ""));
+        match key {
+            "--validators" => {
+                validators = value.parse().map_err(|_| "invalid --validators".to_string())?;
+            }
+            "--faulty" => {
+                faulty = value.parse().map_err(|_| "invalid --faulty".to_string())?;
+            }
+            _ => return Err(format!("unknown argument '{key}'")),
+        }
+    }
+    if validators == 0 {
+        return Err("--validators must be at least 1".to_string());
+    }
+    if faulty >= validators {
+        return Err("--faulty must be fewer than --validators".to_string());
+    }
+
+    let names: Vec<String> = (0..validators).map(|i| format!("validator-{i}")).collect();
+    let set = ValidatorSet::new(
+        names
+            .iter()
+            .map(|name| {
+                Ok(Validator {
+                    id: ValidatorId::new(name.clone()).map_err(|err| format!("{err:?}"))?,
+                    voting_power: 1,
+                })
+            })
+            .collect::<Result<Vec<_>, String>>()?,
+    )
+    .map_err(|err| format!("invalid validator set: {err:?}"))?;
+
+    let honest: Vec<ValidatorId> = names[..(validators - faulty) as usize]
+        .iter()
+        .map(|name| ValidatorId::new(name.clone()).expect("validated above"))
+        .collect();
+
+    let height = 1_u64;
+    let block_hash = hashing::dev_hash(&("abyss:bft:demo:block", height));
+
+    println!("ABYSS multi-validator BFT demo");
+    println!("validators   : {validators}");
+    println!("faulty/silent: {faulty}");
+    println!("total_power  : {}", set.total_power());
+    println!("quorum_power : {} (> 2/3)", set.quorum_power());
+    println!("height       : {height}");
+    println!("block_hash   : {}", hashing::hex(&block_hash));
+
+    match round::finalize_height(&set, height, block_hash, &honest, validators + 1) {
+        Some(event) => {
+            println!("result       : COMMITTED");
+            println!(
+                "commit_round : {} (proposer {})",
+                event.round,
+                round::proposer_for(&set, height, event.round).as_str()
+            );
+            println!("signed_power : {} / {}", event.certificate.signed_power, set.total_power());
+        }
+        None => {
+            println!("result       : NO COMMIT (too few honest validators for quorum)");
+        }
+    }
+    Ok(())
+}
+
 // ── help ──────────────────────────────────────────────────────────────────────
 
 fn print_help() {
@@ -530,6 +610,7 @@ fn print_help() {
     println!("Usage:");
     println!("  abyss-node account new [label]");
     println!("  abyss-node devnet");
+    println!("  abyss-node bft demo [--validators=N] [--faulty=N]");
     println!("  abyss-node presale quote --amount=<usd> [--round=<id>] [--kyc-approved] [--professional] [--json]");
     println!("  abyss-node presale secondary-window [--info] [--tokens=<ac>] [--json]");
     println!("  abyss-node presale dex-quote --amount=<usd> [--json]");

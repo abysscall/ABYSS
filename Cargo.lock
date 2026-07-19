@@ -28,6 +28,7 @@ dependencies = [
 name = "abyss-node"
 version = "0.1.0"
 dependencies = [
+ "abyss-consensus",
  "abyss-core",
  "abyss-social",
  "abyss-tokenomics",

@@ -1,12 +1,18 @@
-//! Early consensus-domain primitives for ABYSS.
+//! Consensus-domain primitives for ABYSS.
 //!
-//! This is not a complete BFT engine yet. It models validator voting power,
-//! duplicate-vote prevention, and quorum certificates so the node can evolve
-//! toward a real HotStuff/Tendermint-style protocol.
+//! This module provides validator voting power, duplicate-vote prevention, and
+//! quorum certificates. The [`round`] module builds a Tendermint-style
+//! multi-validator BFT round engine (propose → prevote → precommit → commit) on
+//! top of these primitives. Networking is not modelled yet; rounds are driven
+//! deterministically for devnet simulation.
 
 use std::collections::{BTreeMap, BTreeSet};
 
 use abyss_core::hashing::{Hash256, ZERO_HASH};
+
+pub mod round;
+
+pub use round::{BftRound, CommitEvent, Step};
 
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct ValidatorId(String);
@@ -73,6 +79,19 @@ impl ValidatorSet {
 
     pub fn total_power(&self) -> u64 {
         self.total_power
+    }
+
+    pub fn len(&self) -> usize {
+        self.validators.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.validators.is_empty()
+    }
+
+    /// Validator ids in deterministic (sorted) order.
+    pub fn ids(&self) -> impl Iterator<Item = &ValidatorId> {
+        self.validators.keys()
     }
 
     pub fn quorum_power(&self) -> u64 {
