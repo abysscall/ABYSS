@@ -1,7 +1,14 @@
 # ABYSS Tasks
 
+**Priority (ADR-0015):** independent ABYSS network + native AC. ERC-20 is not the
+product; interop later via bridges/wrapped assets. Prioritise native-network work
+(consensus, storage, RPC, shielded execution) over any token-contract work.
+
 ## Backlog
 
+- Native network track: persistent storage (RocksDB), JSON-RPC node API, multi-validator BFT consensus.
+- Reword investor-facing site copy (index/invest/wallet.html) from "ERC-20 → Native" to native-AC + bridges/wrapped (keep USDT/USDC payment rails).
+- Finalise pre-genesis fundraising instrument (allocation receipts/escrow) with legal review.
 - Compare `C:\Users\z-mir\abyss` with the current website and extract cold/multisig wallet UX ideas.
 - Migrate old newsletter subscribers from ABYSS-website backups if `subscribers.csv` / `abyss.db` are found.
 - Decide whether old folders should be archived or deleted after comparison.

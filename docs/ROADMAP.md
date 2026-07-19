@@ -3,6 +3,11 @@
 This document tracks development phases. Timelines are targets, not commitments.
 See the whitepaper (docs/whitepaper/) for the full investor-facing roadmap.
 
+**Primary goal (ADR-0015):** launch the independent ABYSS network with native
+coin AC. ERC-20 is not the product; cross-ecosystem compatibility, if needed, is
+added later via bridges and wrapped assets — never by replacing native
+economics.
+
 ---
 
 ## Phase 1 — Foundation (current)
@@ -17,16 +22,16 @@ See the whitepaper (docs/whitepaper/) for the full investor-facing roadmap.
 - [x] CLI: devnet, tokenomics, vesting, presale, secondary-window, dex-quote, social
 - [x] Whitepaper v0.1 (21 pages)
 - [x] Public website (abyss-protocol.netlify.app)
-- [x] ERC-20 placeholder token (in progress)
+- [x] Off-chain allocation receipts (ContributionReceipt), honoured 1:1 at genesis
 
 ---
 
 ## Phase 2 — Investment & Team
 
-**Goal:** close investor round, assemble core team.
+**Goal:** close investor round, assemble core team. No ERC-20 issuance (ADR-0015).
 
-- [ ] ERC-20 ABYSS token deployed and audited on Ethereum
-- [ ] Token sale platform live (invest.html → smart contract)
+- [ ] Pre-genesis allocation instrument finalised (receipts/escrow, legal-reviewed)
+- [ ] Token sale platform live (invest.html → allocation receipts, not a token contract)
 - [ ] Investment round completed
 - [ ] Core team: protocol engineers, ZK cryptographers, security researchers
 - [ ] Independent architecture review
@@ -61,10 +66,11 @@ See the whitepaper (docs/whitepaper/) for the full investor-facing roadmap.
 
 ## Phase 5 — Mainnet
 
-**Goal:** ABYSS chain genesis and migration from ERC-20.
+**Goal:** ABYSS chain genesis on the independent network.
 
 - [ ] Mainnet genesis block
-- [ ] ERC-20 → native AC migration (1:1 swap contract, audited)
+- [ ] Pre-genesis allocation receipts redeemed 1:1 for native AC
+- [ ] Optional interop: audited bridge + wrapped-AC contracts (post-genesis)
 - [ ] AI Agent marketplace launch
 - [ ] ABYSS DEX (production)
 - [ ] Production wallet application
