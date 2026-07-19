@@ -22,7 +22,7 @@ economics.
 - [x] CLI: devnet, tokenomics, vesting, presale, secondary-window, dex-quote, social
 - [x] Whitepaper v0.1 (21 pages)
 - [x] Public website (abyss-protocol.netlify.app)
-- [x] Off-chain allocation receipts (ContributionReceipt), honoured 1:1 at genesis
+- [x] Contribution Receipt quote model (ContributionReceipt); Genesis Allocation Registry planned (ADR-0016)
 
 ---
 
@@ -30,8 +30,8 @@ economics.
 
 **Goal:** close investor round, assemble core team. No ERC-20 issuance (ADR-0015).
 
-- [ ] Pre-genesis allocation instrument finalised (receipts/escrow, legal-reviewed)
-- [ ] Token sale platform live (invest.html → allocation receipts, not a token contract)
+- [ ] Genesis Allocation Registry implemented (Contribution Receipts → Genesis Root, ADR-0016)
+- [ ] Contribution platform live (invest.html → Contribution Registry, not a token contract)
 - [ ] Investment round completed
 - [ ] Core team: protocol engineers, ZK cryptographers, security researchers
 - [ ] Independent architecture review
@@ -69,7 +69,7 @@ economics.
 **Goal:** ABYSS chain genesis on the independent network.
 
 - [ ] Mainnet genesis block
-- [ ] Pre-genesis allocation receipts redeemed 1:1 for native AC
+- [ ] Genesis Builder mints first AC from the Genesis Allocation Registry (no migration/swap)
 - [ ] Optional interop: audited bridge + wrapped-AC contracts (post-genesis)
 - [ ] AI Agent marketplace launch
 - [ ] ABYSS DEX (production)
