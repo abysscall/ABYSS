@@ -49,7 +49,9 @@ fn hash_to_hex(hash: Hash256) -> String {
 
 fn hex_to_hash(value: &str) -> Result<Hash256, StorageError> {
     if value.len() != 64 {
-        return Err(StorageError::Serde("hash hex must be 64 characters".to_string()));
+        return Err(StorageError::Serde(
+            "hash hex must be 64 characters".to_string(),
+        ));
     }
     let mut out = [0_u8; 32];
     for (index, chunk) in value.as_bytes().chunks(2).enumerate() {
@@ -57,7 +59,8 @@ fn hex_to_hash(value: &str) -> Result<Hash256, StorageError> {
             break;
         }
         let pair = std::str::from_utf8(chunk).map_err(|e| StorageError::Serde(e.to_string()))?;
-        out[index] = u8::from_str_radix(pair, 16).map_err(|e| StorageError::Serde(e.to_string()))?;
+        out[index] =
+            u8::from_str_radix(pair, 16).map_err(|e| StorageError::Serde(e.to_string()))?;
     }
     Ok(out)
 }
@@ -67,7 +70,11 @@ impl Chain {
         let (balances, nonces) = self.snapshot_state();
         ChainSnapshot {
             config: self.config().clone(),
-            blocks: self.blocks().iter().map(BlockSnapshot::from_block).collect(),
+            blocks: self
+                .blocks()
+                .iter()
+                .map(BlockSnapshot::from_block)
+                .collect(),
             balances,
             nonces,
         }
@@ -137,7 +144,8 @@ impl TransactionSnapshot {
         Ok(Transaction {
             from: Address::new(self.from).map_err(StorageError::Address)?,
             to: Address::new(self.to).map_err(StorageError::Address)?,
-            amount: Coin::from_micro_ac(self.amount_micro_ac).ok_or(StorageError::InvalidBalance)?,
+            amount: Coin::from_micro_ac(self.amount_micro_ac)
+                .ok_or(StorageError::InvalidBalance)?,
             fee: Coin::from_micro_ac(self.fee_micro_ac).ok_or(StorageError::InvalidBalance)?,
             nonce: self.nonce,
             memo_commitment: hex_to_hash(&self.memo_commitment)?,
@@ -147,7 +155,8 @@ impl TransactionSnapshot {
 
 pub fn save_chain(chain: &Chain, path: impl AsRef<Path>) -> Result<(), StorageError> {
     let snapshot = chain.to_snapshot();
-    let json = serde_json::to_string_pretty(&snapshot).map_err(|e| StorageError::Serde(e.to_string()))?;
+    let json =
+        serde_json::to_string_pretty(&snapshot).map_err(|e| StorageError::Serde(e.to_string()))?;
     if let Some(parent) = path.as_ref().parent() {
         fs::create_dir_all(parent).map_err(|e| StorageError::Io(e.to_string()))?;
     }
@@ -156,7 +165,8 @@ pub fn save_chain(chain: &Chain, path: impl AsRef<Path>) -> Result<(), StorageEr
 
 pub fn load_chain(path: impl AsRef<Path>) -> Result<Chain, StorageError> {
     let json = fs::read_to_string(path.as_ref()).map_err(|e| StorageError::Io(e.to_string()))?;
-    let snapshot: ChainSnapshot = serde_json::from_str(&json).map_err(|e| StorageError::Serde(e.to_string()))?;
+    let snapshot: ChainSnapshot =
+        serde_json::from_str(&json).map_err(|e| StorageError::Serde(e.to_string()))?;
     Chain::from_snapshot(snapshot)
 }
 
@@ -225,13 +235,7 @@ mod tests {
             0,
         )
         .unwrap();
-        let tx = Transaction::new(
-            treasury,
-            alice,
-            Coin::from_ac(5).unwrap(),
-            Coin::ZERO,
-            0,
-        );
+        let tx = Transaction::new(treasury, alice, Coin::from_ac(5).unwrap(), Coin::ZERO, 0);
         chain.produce_block("validator-1", 1_000, vec![tx]).unwrap();
 
         let restored = Chain::from_snapshot(chain.to_snapshot()).unwrap();

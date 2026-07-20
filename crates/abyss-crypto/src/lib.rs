@@ -101,4 +101,3 @@ mod tests {
         assert_ne!(alice, bob);
     }
 }
-

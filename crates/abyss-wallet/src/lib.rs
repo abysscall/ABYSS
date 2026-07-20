@@ -5,4 +5,3 @@ pub mod agent_policy;
 
 pub use account::{WalletAccount, WalletError};
 pub use agent_policy::{AgentPermission, AgentPolicy};
-
