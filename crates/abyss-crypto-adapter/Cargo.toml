@@ -7,6 +7,6 @@ publish = false
 
 [dependencies]
 abyss-crypto-api = { path = "../abyss-crypto-api" }
-ed25519-dalek = "1.0"
-rand = "0.7"
+ed25519-dalek = "2"
+rand = "0.8"
 secrecy = "0.7"
