@@ -1,7 +1,12 @@
 # ABYSS — Roadmap
 
-This document tracks development phases. Timelines are targets, not commitments.
-See the whitepaper (docs/whitepaper/) for the full investor-facing roadmap.
+This document tracks development phases.
+Timelines are targets, not commitments.
+
+> **ADR-0015 (July 2026):** ERC-20 is no longer the primary goal.
+> The native ABYSS chain and native AC coin are the primary objective.
+> External compatibility will be delivered through bridges and wrapped tokens
+> where needed — not by making ERC-20 the canonical form of AC.
 
 ---
 
@@ -12,12 +17,12 @@ See the whitepaper (docs/whitepaper/) for the full investor-facing roadmap.
 - [x] Core ledger: Coin, Chain, Block, Transaction, Mempool
 - [x] Single-validator devnet with treasury/alice/bob demonstration
 - [x] Agent policy enforcement in wallet layer
-- [x] abyss-tokenomics: 7-stage sale model, vesting, secondary window, DEX final sale
-- [x] abyss-social: post/visibility/view-key/agent-policy data model (14 tests)
-- [x] CLI: devnet, tokenomics, vesting, presale, secondary-window, dex-quote, social
+- [x] abyss-tokenomics: 7-stage sale model, vesting, secondary window
+- [x] abyss-social: post/visibility/view-key/agent-policy (14 tests)
+- [x] CLI: devnet, tokenomics, vesting, presale, secondary-window, social
 - [x] Whitepaper v0.1 (21 pages)
 - [x] Public website (abyss-protocol.netlify.app)
-- [x] ERC-20 placeholder token (in progress)
+- [x] Full ADR documentation (ADR-0000 through ADR-0015)
 
 ---
 
@@ -25,11 +30,10 @@ See the whitepaper (docs/whitepaper/) for the full investor-facing roadmap.
 
 **Goal:** close investor round, assemble core team.
 
-- [ ] ERC-20 ABYSS token deployed and audited on Ethereum
-- [ ] Token sale platform live (invest.html → smart contract)
-- [ ] Investment round completed
+- [ ] Investment round completed (off-chain signed agreements + registry)
 - [ ] Core team: protocol engineers, ZK cryptographers, security researchers
 - [ ] Independent architecture review
+- [ ] Whitepaper v1.0 (updated to reflect native-first model per ADR-0015)
 
 ---
 
@@ -54,19 +58,20 @@ See the whitepaper (docs/whitepaper/) for the full investor-facing roadmap.
 - [ ] Shielded-by-default transfer model
 - [ ] Stealth addresses
 - [ ] Private mempool
-- [ ] Multi-prover verification
+- [ ] Multi-prover verification (ADR-0009)
 - [ ] Independent security audit
 
 ---
 
 ## Phase 5 — Mainnet
 
-**Goal:** ABYSS chain genesis and migration from ERC-20.
+**Goal:** ABYSS chain genesis. Native AC is the canonical asset.
 
 - [ ] Mainnet genesis block
-- [ ] ERC-20 → native AC migration (1:1 swap contract, audited)
+- [ ] Native AC coin live — no migration needed
+- [ ] Investor allocations fulfilled in native AC at genesis
 - [ ] AI Agent marketplace launch
-- [ ] ABYSS DEX (production)
+- [ ] ABYSS DEX (production, native AC pairs)
 - [ ] Production wallet application
 
 ---
@@ -81,4 +86,17 @@ See the whitepaper (docs/whitepaper/) for the full investor-facing roadmap.
 - [ ] View-key-gated selective disclosure
 - [ ] On-chain governance for moderation
 - [ ] Agent-curated feeds
-- [ ] Creator monetisation via AC and DEX
+- [ ] Creator monetisation via native AC
+
+---
+
+## Future — Bridges (additive, not replacement)
+
+When cross-chain compatibility becomes a product requirement:
+
+- [ ] Bridge contract on Ethereum (or other EVM chain)
+- [ ] Wrapped AC (wAC) — represents locked native AC on external chains
+- [ ] Bridge operator or decentralised bridge protocol
+
+This is strictly additive. wAC extends ABYSS's reach
+without replacing its native economy.
