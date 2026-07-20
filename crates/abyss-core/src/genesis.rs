@@ -44,4 +44,3 @@ mod tests {
         assert_eq!(config.validate(), Ok(()));
     }
 }
-

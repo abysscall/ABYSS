@@ -1,4 +1,4 @@
-﻿//! Tokenomics and sale planning primitives for ABYSS.
+//! Tokenomics and sale planning primitives for ABYSS.
 //!
 //! This module is a deterministic planning model, not a legal wrapper and not
 //! an on-chain sale contract. Any real token sale must be reviewed by qualified
@@ -712,4 +712,3 @@ mod tests {
         );
     }
 }
-

@@ -95,9 +95,7 @@ impl Post {
     pub fn author_visible_to(&self, viewer: &str, grants: &ViewKeyRegistry) -> bool {
         match self.visibility {
             Visibility::Attributed => true,
-            Visibility::Shielded => {
-                viewer == self.author || grants.has_grant(&self.id, viewer)
-            }
+            Visibility::Shielded => viewer == self.author || grants.has_grant(&self.id, viewer),
         }
     }
 }
@@ -105,9 +103,15 @@ impl Post {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SocialError {
     EmptyPost,
-    PostTooLong { max_bytes: usize, actual_bytes: usize },
+    PostTooLong {
+        max_bytes: usize,
+        actual_bytes: usize,
+    },
     AgentLacksSocialPermission,
-    AgentExceedsPostingRate { limit_per_window: u32, window_seconds: u64 },
+    AgentExceedsPostingRate {
+        limit_per_window: u32,
+        window_seconds: u64,
+    },
     UnknownPost(PostId),
     UnauthorisedDisclosure,
 }
@@ -362,7 +366,12 @@ mod tests {
     fn shielded_post_hides_author_from_strangers() {
         let mut feed = DevFeed::new();
         let id = feed
-            .publish("abyss1alice", "secret thoughts", Visibility::Shielded, 1_000)
+            .publish(
+                "abyss1alice",
+                "secret thoughts",
+                Visibility::Shielded,
+                1_000,
+            )
             .unwrap();
         let post = feed.get(id).unwrap();
         let grants = ViewKeyRegistry::new();
@@ -375,7 +384,12 @@ mod tests {
     fn view_key_grant_discloses_shielded_author() {
         let mut feed = DevFeed::new();
         let id = feed
-            .publish("abyss1alice", "secret thoughts", Visibility::Shielded, 1_000)
+            .publish(
+                "abyss1alice",
+                "secret thoughts",
+                Visibility::Shielded,
+                1_000,
+            )
             .unwrap();
         let post = feed.get(id).unwrap();
 
@@ -482,8 +496,14 @@ mod tests {
         };
         let mut window = AgentActivityWindow::new(0);
 
-        assert_eq!(window.record_post(&policy, AgentSocialAction::Post, 0), Ok(()));
-        assert_eq!(window.record_post(&policy, AgentSocialAction::Post, 100), Ok(()));
+        assert_eq!(
+            window.record_post(&policy, AgentSocialAction::Post, 0),
+            Ok(())
+        );
+        assert_eq!(
+            window.record_post(&policy, AgentSocialAction::Post, 100),
+            Ok(())
+        );
         // third post within the same window exceeds the cap
         assert_eq!(
             window.record_post(&policy, AgentSocialAction::Post, 200),
@@ -505,7 +525,10 @@ mod tests {
         };
         let mut window = AgentActivityWindow::new(0);
 
-        assert_eq!(window.record_post(&policy, AgentSocialAction::Post, 0), Ok(()));
+        assert_eq!(
+            window.record_post(&policy, AgentSocialAction::Post, 0),
+            Ok(())
+        );
         // still within the 60s window -> rejected
         assert_eq!(
             window.record_post(&policy, AgentSocialAction::Post, 30_000),

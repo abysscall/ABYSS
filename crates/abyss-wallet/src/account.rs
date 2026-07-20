@@ -48,13 +48,7 @@ impl WalletAccount {
         &mut self.agent_policy
     }
 
-    pub fn create_payment(
-        &self,
-        to: Address,
-        amount: Coin,
-        fee: Coin,
-        nonce: u64,
-    ) -> Transaction {
+    pub fn create_payment(&self, to: Address, amount: Coin, fee: Coin, nonce: u64) -> Transaction {
         Transaction::new(self.address(), to, amount, fee, nonce)
     }
 
@@ -85,13 +79,12 @@ mod tests {
     #[test]
     fn account_can_create_payment() {
         let account = WalletAccount::from_dev_seed("alice", "alice");
-        let tx = account
-            .create_payment(
-                Address::new("bob").unwrap(),
-                Coin::from_ac(1).unwrap(),
-                Coin::ZERO,
-                0,
-            );
+        let tx = account.create_payment(
+            Address::new("bob").unwrap(),
+            Coin::from_ac(1).unwrap(),
+            Coin::ZERO,
+            0,
+        );
 
         assert_eq!(tx.from, account.address());
     }
