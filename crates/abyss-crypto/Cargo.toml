@@ -13,3 +13,11 @@ path = "src/lib.rs"
 [dependencies]
 abyss-core = { path = "../abyss-core" }
 
+[features]
+# Feature flags for abyss-crypto. "dev-keys" enables the development-only
+# deterministic key generation and debugging helpers. Intended to be disabled
+# in production builds once a production implementation is provided.
+# Note: currently kept in default to avoid breaking existing CI/tests; the
+# plan is to flip default to [] after the production adapter is merged.
+default = ["dev-keys"]
+dev-keys = []

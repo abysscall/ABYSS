@@ -3,10 +3,10 @@
 This document tracks development phases.
 Timelines are targets, not commitments.
 
-> **ADR-0015 (July 2026):** ERC-20 is no longer the primary goal.
+> **ADR-0015 (July 2026):** Native chain is the primary goal.
 > The native ABYSS chain and native AC coin are the primary objective.
 > External compatibility will be delivered through bridges and wrapped tokens
-> where needed — not by making ERC-20 the canonical form of AC.
+> where needed — not as the canonical form of AC.
 
 ---
 
@@ -94,9 +94,9 @@ Timelines are targets, not commitments.
 
 When cross-chain compatibility becomes a product requirement:
 
-- [ ] Bridge contract on Ethereum (or other EVM chain)
 - [ ] Wrapped AC (wAC) — represents locked native AC on external chains
 - [ ] Bridge operator or decentralised bridge protocol
+- [ ] Bridge contracts on EVM chains (Ethereum, BSC, etc.) — optional, additive only
 
 This is strictly additive. wAC extends ABYSS's reach
 without replacing its native economy.

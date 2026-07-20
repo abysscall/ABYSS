@@ -1,0 +1,9 @@
+﻿[package]
+name = "abyss-crypto-api"
+version = "0.1.0"
+edition = "2021"
+description = "Public crypto API traits for ABYSS allowing swap-in of production implementations"
+publish = false
+
+[dependencies]
+abyss-core = { path = "../abyss-core" }

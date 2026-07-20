@@ -69,8 +69,17 @@ impl PublicKey {
 }
 
 impl SecretKey {
+    #[cfg(feature = "dev-keys")]
     pub fn expose_dev_hex(&self) -> String {
         hex(&self.0)
+    }
+
+    // In non-dev builds, do not expose secret material. Keep the API but return
+    // a redacted placeholder to avoid accidental leakage while preserving
+    // backwards compatibility for callers that expect the method to exist.
+    #[cfg(not(feature = "dev-keys"))]
+    pub fn expose_dev_hex(&self) -> String {
+        "<redacted>".to_string()
     }
 }
 

@@ -1,4 +1,4 @@
-[workspace]
+﻿[workspace]
 resolver = "2"
 members = [
     "crates/abyss-core",
@@ -8,6 +8,8 @@ members = [
     "crates/abyss-social",
     "crates/abyss-tokenomics",
     "crates/abyss-wallet",
+    "crates/abyss-crypto-api",
+    "crates/abyss-crypto-adapter",
 ]
 
 [workspace.package]
