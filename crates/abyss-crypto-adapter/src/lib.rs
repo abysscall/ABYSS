@@ -9,7 +9,6 @@
 use abyss_crypto_api::{Keypair as KeypairTrait, Signer as SignerTrait, Verifier as VerifierTrait};
 use ed25519_dalek::{Keypair, PublicKey, Signature, Signer, Verifier};
 use rand::rngs::OsRng;
-use secrecy::{Secret, Zeroize};
 
 /// Ed25519 Keypair wrapper implementing the repository traits.
 /// The secret key is protected via the secrecy crate and will be zeroed on drop.
