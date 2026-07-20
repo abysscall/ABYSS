@@ -58,4 +58,3 @@ impl Block {
         dev_hash(&self.header)
     }
 }
-

@@ -29,7 +29,11 @@ impl TokenomicsPlan {
             allocations: vec![
                 // ── Team Reserve side — sums to exactly 30,000,000 AC ──
                 Allocation::new("Validator rewards and network security", 1_500, 8_250_000),
-                Allocation::new("Ecosystem grants, apps, audits, bug bounties", 1_000, 5_500_000),
+                Allocation::new(
+                    "Ecosystem grants, apps, audits, bug bounties",
+                    1_000,
+                    5_500_000,
+                ),
                 Allocation::new("Foundation treasury with long vesting", 1_000, 5_500_000),
                 Allocation::new("Core contributors with long vesting", 1_000, 5_500_000),
                 Allocation::new("DEX liquidity reserve", 1_000, 5_250_000),
@@ -113,7 +117,8 @@ impl TokenomicsPlan {
             .iter()
             .filter(|a| a.name != "Public sale and liquidity formation")
             .fold(Coin::ZERO, |acc, a| {
-                acc.checked_add(a.amount()).expect("team reserve fits within max supply")
+                acc.checked_add(a.amount())
+                    .expect("team reserve fits within max supply")
             })
     }
 }
@@ -182,15 +187,11 @@ impl InvestorSecondaryWindow {
     }
 
     /// Validate a listing request from a Stage I investor.
-    pub fn validate_listing(
-        &self,
-        listing: &SecondaryListing,
-    ) -> Result<(), TokenomicsError> {
+    pub fn validate_listing(&self, listing: &SecondaryListing) -> Result<(), TokenomicsError> {
         if !listing.is_stage1_investor {
             return Err(TokenomicsError::SecondaryWindowNotEligible);
         }
-        let min = Coin::from_ac(self.min_listing_ac())
-            .ok_or(TokenomicsError::SupplyOverflow)?;
+        let min = Coin::from_ac(self.min_listing_ac()).ok_or(TokenomicsError::SupplyOverflow)?;
         if listing.tokens_to_list < min {
             return Err(TokenomicsError::SecondaryListingBelowMinimum {
                 min_ac: self.min_listing_ac(),
@@ -302,8 +303,11 @@ impl TeamVesting {
     }
 
     pub fn unlocked_in_year(&self, year: u16) -> Coin {
-        if year == 0 { return Coin::ZERO; }
-        let months_end = year.saturating_mul(12)
+        if year == 0 {
+            return Coin::ZERO;
+        }
+        let months_end = year
+            .saturating_mul(12)
             .min(self.tranche_b_months.max(self.tranche_a_months));
         let months_start = months_end.saturating_sub(12);
         self.total_unlocked(months_end)
@@ -339,7 +343,12 @@ impl InvestorProfile {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum KycStatus { NotStarted, Pending, Approved, Rejected }
+pub enum KycStatus {
+    NotStarted,
+    Pending,
+    Approved,
+    Rejected,
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Allocation {
@@ -350,7 +359,11 @@ pub struct Allocation {
 
 impl Allocation {
     pub const fn new(name: &'static str, basis_points: u16, exact_amount_ac: u64) -> Self {
-        Self { name, basis_points, exact_amount_ac }
+        Self {
+            name,
+            basis_points,
+            exact_amount_ac,
+        }
     }
     pub fn amount(&self) -> Coin {
         Coin::from_ac(self.exact_amount_ac).expect("allocation fits max supply")
@@ -398,14 +411,24 @@ pub struct VestingSchedule {
 
 impl VestingSchedule {
     pub const fn locked(months: u16) -> Self {
-        Self { cliff_months: months, duration_months: months }
+        Self {
+            cliff_months: months,
+            duration_months: months,
+        }
     }
     pub const fn linear(cliff_months: u16, duration_months: u16) -> Self {
-        Self { cliff_months, duration_months }
+        Self {
+            cliff_months,
+            duration_months,
+        }
     }
     pub fn unlocked_amount(&self, total: Coin, elapsed_months: u16) -> Coin {
-        if elapsed_months < self.cliff_months { return Coin::ZERO; }
-        if self.duration_months == 0 || elapsed_months >= self.duration_months { return total; }
+        if elapsed_months < self.cliff_months {
+            return Coin::ZERO;
+        }
+        if self.duration_months == 0 || elapsed_months >= self.duration_months {
+            return total;
+        }
         let unlocked = total.micro_ac() * elapsed_months as u64 / self.duration_months as u64;
         Coin::from_micro_ac(unlocked).expect("vesting cannot exceed total")
     }
@@ -431,16 +454,19 @@ impl SaleRound {
     ) -> Self {
         let id = match name {
             "Sale to Investors" => "sale-to-investors",
-            "Pre-Sale"          => "pre-sale",
-            "Sale Stage 1"      => "public-stage-1",
-            "Sale Stage 2"      => "public-stage-2",
-            "Sale Stage 3"      => "public-stage-3",
-            _                   => "custom",
+            "Pre-Sale" => "pre-sale",
+            "Sale Stage 1" => "public-stage-1",
+            "Sale Stage 2" => "public-stage-2",
+            "Sale Stage 3" => "public-stage-3",
+            _ => "custom",
         };
         Self {
-            id, name,
+            id,
+            name,
             token_cap: Coin::from_ac(token_cap_ac).expect("round cap must fit max supply"),
-            price_usd_cents, minimum_ticket_usd, lockup_months,
+            price_usd_cents,
+            minimum_ticket_usd,
+            lockup_months,
         }
     }
 
@@ -448,15 +474,22 @@ impl SaleRound {
         (self.token_cap.micro_ac() / COIN) * self.price_usd_cents
     }
 
-    pub fn tokens_for_usd_cents(&self, contribution_usd_cents: u64) -> Result<Coin, TokenomicsError> {
+    pub fn tokens_for_usd_cents(
+        &self,
+        contribution_usd_cents: u64,
+    ) -> Result<Coin, TokenomicsError> {
         if contribution_usd_cents < self.minimum_ticket_usd * 100 {
             return Err(TokenomicsError::ContributionBelowMinimum);
         }
         let micro_ac = contribution_usd_cents
-            .checked_mul(COIN).ok_or(TokenomicsError::SupplyOverflow)?
-            .checked_div(self.price_usd_cents).ok_or(TokenomicsError::InvalidRoundPrice)?;
+            .checked_mul(COIN)
+            .ok_or(TokenomicsError::SupplyOverflow)?
+            .checked_div(self.price_usd_cents)
+            .ok_or(TokenomicsError::InvalidRoundPrice)?;
         let tokens = Coin::from_micro_ac(micro_ac).ok_or(TokenomicsError::SupplyOverflow)?;
-        if tokens > self.token_cap { return Err(TokenomicsError::ContributionExceedsRoundCap); }
+        if tokens > self.token_cap {
+            return Err(TokenomicsError::ContributionExceedsRoundCap);
+        }
         Ok(tokens)
     }
 }
@@ -486,19 +519,28 @@ pub fn usd_cents_to_string(cents: u64) -> String {
 
 pub fn parse_usd_to_cents(value: &str) -> Result<u64, TokenomicsError> {
     let value = value.trim().trim_start_matches('$').replace(',', "");
-    if value.is_empty() { return Err(TokenomicsError::InvalidUsdAmount); }
+    if value.is_empty() {
+        return Err(TokenomicsError::InvalidUsdAmount);
+    }
     let mut parts = value.split('.');
-    let dollars = parts.next().ok_or(TokenomicsError::InvalidUsdAmount)?
-        .parse::<u64>().map_err(|_| TokenomicsError::InvalidUsdAmount)?;
+    let dollars = parts
+        .next()
+        .ok_or(TokenomicsError::InvalidUsdAmount)?
+        .parse::<u64>()
+        .map_err(|_| TokenomicsError::InvalidUsdAmount)?;
     let cents = match parts.next() {
-        Some(part) if part.len() <= 2 => {
-            format!("{part:0<2}").parse::<u64>().map_err(|_| TokenomicsError::InvalidUsdAmount)?
-        }
+        Some(part) if part.len() <= 2 => format!("{part:0<2}")
+            .parse::<u64>()
+            .map_err(|_| TokenomicsError::InvalidUsdAmount)?,
         Some(_) => return Err(TokenomicsError::InvalidUsdAmount),
         None => 0,
     };
-    if parts.next().is_some() { return Err(TokenomicsError::InvalidUsdAmount); }
-    dollars.checked_mul(100).and_then(|a| a.checked_add(cents))
+    if parts.next().is_some() {
+        return Err(TokenomicsError::InvalidUsdAmount);
+    }
+    dollars
+        .checked_mul(100)
+        .and_then(|a| a.checked_add(cents))
         .ok_or(TokenomicsError::InvalidUsdAmount)
 }
 
@@ -517,18 +559,28 @@ mod tests {
     fn team_reserve_and_public_sale_reconcile_to_55m() {
         let plan = TokenomicsPlan::abyss_default();
         let team = plan.team_reserve_amount();
-        let public = plan.allocation_amount("Public sale and liquidity formation").unwrap();
+        let public = plan
+            .allocation_amount("Public sale and liquidity formation")
+            .unwrap();
         assert_eq!(team, Coin::from_ac(30_000_000).unwrap());
         assert_eq!(public, Coin::from_ac(25_000_000).unwrap());
-        assert_eq!(team.checked_add(public).unwrap(), Coin::from_ac(55_000_000).unwrap());
+        assert_eq!(
+            team.checked_add(public).unwrap(),
+            Coin::from_ac(55_000_000).unwrap()
+        );
     }
 
     #[test]
     fn sale_rounds_fit_public_allocation() {
         let plan = TokenomicsPlan::abyss_default();
-        let public = plan.allocation_amount("Public sale and liquidity formation").unwrap();
-        let round_total = plan.sale_rounds.iter()
-            .try_fold(Coin::ZERO, |acc, r| acc.checked_add(r.token_cap)).unwrap();
+        let public = plan
+            .allocation_amount("Public sale and liquidity formation")
+            .unwrap();
+        let round_total = plan
+            .sale_rounds
+            .iter()
+            .try_fold(Coin::ZERO, |acc, r| acc.checked_add(r.token_cap))
+            .unwrap();
         assert_eq!(round_total, Coin::from_ac(25_000_000).unwrap());
         assert_eq!(public, Coin::from_ac(25_000_000).unwrap());
     }
@@ -544,8 +596,14 @@ mod tests {
     #[test]
     fn sale_to_investors_enforces_500k_minimum() {
         let round = SaleRound::new("Sale to Investors", 2_000_000, 100, 500_000, 0);
-        assert_eq!(round.tokens_for_usd_cents(499_999_00), Err(TokenomicsError::ContributionBelowMinimum));
-        assert_eq!(round.tokens_for_usd_cents(500_000_00), Ok(Coin::from_ac(500_000).unwrap()));
+        assert_eq!(
+            round.tokens_for_usd_cents(499_999_00),
+            Err(TokenomicsError::ContributionBelowMinimum)
+        );
+        assert_eq!(
+            round.tokens_for_usd_cents(500_000_00),
+            Ok(Coin::from_ac(500_000).unwrap())
+        );
     }
 
     // ── Investor Secondary Window tests ──────────────────────────────────────
@@ -553,10 +611,10 @@ mod tests {
     #[test]
     fn secondary_window_parameters_are_correct() {
         let w = InvestorSecondaryWindow::abyss_default();
-        assert_eq!(w.price_usd_cents, 300);           // $3.00
-        assert_eq!(w.registration_days, 14);           // 2 weeks
-        assert_eq!(w.min_listing_bps, 5_000);          // 50%
-        assert_eq!(w.min_listing_ac(), 250_000);       // 50% of 500,000 AC
+        assert_eq!(w.price_usd_cents, 300); // $3.00
+        assert_eq!(w.registration_days, 14); // 2 weeks
+        assert_eq!(w.min_listing_bps, 5_000); // 50%
+        assert_eq!(w.min_listing_ac(), 250_000); // 50% of 500,000 AC
     }
 
     #[test]
@@ -584,7 +642,10 @@ mod tests {
     fn non_stage1_investor_cannot_list() {
         let w = InvestorSecondaryWindow::abyss_default();
         let listing = SecondaryListing::new("presale-investor", 300_000, false).unwrap();
-        assert_eq!(w.validate_listing(&listing), Err(TokenomicsError::SecondaryWindowNotEligible));
+        assert_eq!(
+            w.validate_listing(&listing),
+            Err(TokenomicsError::SecondaryWindowNotEligible)
+        );
     }
 
     #[test]
@@ -618,7 +679,10 @@ mod tests {
     #[test]
     fn dex_final_sale_prices_at_5_dollars() {
         let dex = DexFinalSale::abyss_default();
-        assert_eq!(dex.tokens_for_usd_cents(500_00), Ok(Coin::from_ac(100).unwrap()));
+        assert_eq!(
+            dex.tokens_for_usd_cents(500_00),
+            Ok(Coin::from_ac(100).unwrap())
+        );
     }
 
     // ── Vesting ───────────────────────────────────────────────────────────────
@@ -633,7 +697,7 @@ mod tests {
     fn year_by_year_unlock_matches_published_schedule() {
         let v = TeamVesting::abyss_default();
         assert_eq!(v.unlocked_in_year(1), Coin::from_ac(15_000_000).unwrap()); // A+B yr1
-        assert_eq!(v.unlocked_in_year(2), Coin::from_ac(5_000_000).unwrap());  // B only
+        assert_eq!(v.unlocked_in_year(2), Coin::from_ac(5_000_000).unwrap()); // B only
         assert_eq!(v.unlocked_in_year(3), Coin::from_ac(5_000_000).unwrap());
         assert_eq!(v.unlocked_in_year(4), Coin::from_ac(5_000_000).unwrap());
     }
@@ -642,6 +706,9 @@ mod tests {
     fn parses_usd_amounts() {
         assert_eq!(parse_usd_to_cents("$1,250.50"), Ok(125_050));
         assert_eq!(parse_usd_to_cents("900"), Ok(90_000));
-        assert_eq!(parse_usd_to_cents("1.234"), Err(TokenomicsError::InvalidUsdAmount));
+        assert_eq!(
+            parse_usd_to_cents("1.234"),
+            Err(TokenomicsError::InvalidUsdAmount)
+        );
     }
 }
