@@ -1,0 +1,11 @@
+﻿[package]
+name = "abyss-crypto-adapter"
+version = "0.1.0"
+edition = "2021"
+description = "Production ed25519 adapter implementing abyss-crypto-api traits"
+publish = false
+
+[dependencies]
+abyss-crypto-api = { path = "../abyss-crypto-api" }
+ed25519-dalek = "1.0"
+rand = "0.7"
