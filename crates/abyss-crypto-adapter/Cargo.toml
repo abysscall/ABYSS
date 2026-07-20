@@ -8,4 +8,4 @@ publish = false
 [dependencies]
 abyss-crypto-api = { path = "../abyss-crypto-api" }
 ed25519-dalek = "1.0"
-rand = "0.8"
+rand = "0.7"
