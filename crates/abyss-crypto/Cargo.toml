@@ -12,6 +12,7 @@ path = "src/lib.rs"
 
 [dependencies]
 abyss-core = { path = "../abyss-core" }
+libfuzzer-sys = { version = "0.4.13", optional = true }
 
 [features]
 # Feature flags for abyss-crypto. "dev-keys" enables the development-only
@@ -21,3 +22,4 @@ abyss-core = { path = "../abyss-core" }
 # plan is to flip default to [] after the production adapter is merged.
 default = ["dev-keys"]
 dev-keys = []
+libfuzzer = ["dep:libfuzzer-sys"]
