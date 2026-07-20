@@ -39,7 +39,10 @@ impl AgentPolicy {
     }
 
     pub fn transaction_allowed(&self, amount: Coin) -> bool {
-        if self.permissions.contains(&AgentPermission::ExecuteLimitedTrades) {
+        if self
+            .permissions
+            .contains(&AgentPermission::ExecuteLimitedTrades)
+        {
             return amount <= self.agent_trade_limit;
         }
 

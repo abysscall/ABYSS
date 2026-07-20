@@ -28,4 +28,3 @@ pub fn hex(hash: &Hash256) -> String {
     }
     out
 }
-

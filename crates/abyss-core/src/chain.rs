@@ -41,7 +41,9 @@ impl Chain {
         let mut balances = BTreeMap::new();
         for (address, amount) in genesis.allocations {
             let current = balances.get(&address).copied().unwrap_or(Coin::ZERO);
-            let next = current.checked_add(amount).ok_or(ApplyError::BalanceOverflow)?;
+            let next = current
+                .checked_add(amount)
+                .ok_or(ApplyError::BalanceOverflow)?;
             balances.insert(address, next);
         }
 
@@ -58,7 +60,10 @@ impl Chain {
     }
 
     pub fn height(&self) -> u64 {
-        self.blocks.last().map(|block| block.header.height).unwrap_or(0)
+        self.blocks
+            .last()
+            .map(|block| block.header.height)
+            .unwrap_or(0)
     }
 
     pub fn tip_hash(&self) -> Hash256 {
@@ -145,12 +150,13 @@ impl Chain {
 
         let debit = tx.total_debit().ok_or(ApplyError::BalanceOverflow)?;
         let sender_balance = self.balance_of(&tx.from);
-        let new_sender_balance = sender_balance
-            .checked_sub(debit)
-            .ok_or(ApplyError::InsufficientFunds {
-                available: sender_balance,
-                required: debit,
-            })?;
+        let new_sender_balance =
+            sender_balance
+                .checked_sub(debit)
+                .ok_or(ApplyError::InsufficientFunds {
+                    available: sender_balance,
+                    required: debit,
+                })?;
 
         let receiver_balance = self.balance_of(&tx.to);
         let new_receiver_balance = receiver_balance
@@ -268,13 +274,7 @@ mod tests {
         let mut chain = chain();
         let treasury = Address::new("treasury").unwrap();
         let alice = Address::new("alice").unwrap();
-        let tx = Transaction::new(
-            treasury,
-            alice,
-            Coin::from_ac(1).unwrap(),
-            Coin::ZERO,
-            1,
-        );
+        let tx = Transaction::new(treasury, alice, Coin::from_ac(1).unwrap(), Coin::ZERO, 1);
 
         assert!(matches!(
             chain.produce_block("validator-1", 1_000, vec![tx]),
