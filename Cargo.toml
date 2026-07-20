@@ -8,6 +8,7 @@ members = [
     "crates/abyss-social",
     "crates/abyss-tokenomics",
     "crates/abyss-wallet",
+    "crates/abyss-crypto-api",
 ]
 
 [workspace.package]
