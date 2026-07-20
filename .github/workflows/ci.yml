@@ -15,6 +15,10 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
+      - name: Install cargo-deny
+        run: cargo install cargo-deny
+      - name: cargo-deny check
+        run: cargo deny check advisories licenses bans sources
       - name: fmt check
         run: cargo fmt -- --check
       - name: clippy

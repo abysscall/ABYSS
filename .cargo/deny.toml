@@ -1,0 +1,81 @@
+# Cargo deny configuration for ABYSS
+# See: https://embarkstudios.github.io/cargo-deny/
+
+[advisories]
+# The advisories table is used to configure the advisories source.
+db-path = "~/.cargo/advisory-db"
+# The url(s) of the advisory databases to use. By default the RustSec advisory
+# database is used. Optionally add additional sources.
+db-urls = ["https://github.com/rustsec/advisory-db/raw/osv/crates/"]
+# How to handle crates with security vulnerabilities
+vulnerability = "deny"
+# How to handle unmaintained crates
+unmaintained = "warn"
+# How to handle crates that have been yanked from crates.io
+yanked = "warn"
+# The confidence level for security vulnerabilities. Only vulnerabilities with
+# a confidence level of or higher are considered when evaluating against the
+# vulnerability field. If a vulnerability is yanked, this does not apply.
+notice = "warn"
+# A list of advisory IDs to ignore. Note that ignored advisories will still
+# output a note when they are encountered.
+ignore = [
+    #"RUSTSEC-2020-0001",
+]
+
+[licenses]
+# The lint level for crates which do not have a detectable license
+unlicensed = "warn"
+# List of explicitly disallowed licenses
+deny = [
+    "GPL-2.0",
+    "GPL-3.0",
+    "AGPL-3.0",
+]
+# List of explicitly allowed licenses
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 OR MIT",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+]
+# Lint level for licenses considered copyleft
+copyleft = "warn"
+# Blanket approval or denial for OSI-approved or FSF Free/Libre licenses
+allow-osi-fsf-free = "both"
+# Lint level used when no other predicates are matched
+default = "deny"
+# The lint level for crate which do not declare any licenses whatsoever
+confidence-threshold = 0.8
+
+[bans]
+# Lint level for when multiple versions of the same crate are detected
+multiple-versions = "warn"
+# Lint level for when a crate marked as 'deprecated' is detected
+deprecated = "warn"
+# Lint level for when a crate marked as 'unmaintained' is detected
+unmaintained = "warn"
+# The graph highlighting used when creating dotgraphs
+highlight = "all"
+# List of explicitly allowed duplicate crates
+allow = [
+    #{ name = "ansi_term", version = "=0.11.0" },
+]
+# List of explicitly denied crates
+deny = [
+    # To deny a crate across all versions:
+    # { name = "pcre2" }
+    # Optionally the version can be specified as well, e.g.:
+    # { name = "pcre2", version = "*" }
+]
+
+[sources]
+# Lint level for what to happen when a crate from a crate registry that is not in the allow list is detected
+unknown-registry = "warn"
+# Lint level for what to happen when a crate from a git repository that is not in the allow list is detected
+unknown-git = "warn"
+# List of allowed crate registries containing allowed repositories.
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+# List of allowed Git repositories
+allow-git = []
