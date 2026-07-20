@@ -169,7 +169,10 @@ pub enum ConsensusError {
     DuplicateValidator,
     DuplicateVote,
     EmptyValidatorSet,
-    InsufficientQuorum { signed_power: u64, required_power: u64 },
+    InsufficientQuorum {
+        signed_power: u64,
+        required_power: u64,
+    },
     InvalidValidatorId,
     UnknownValidator,
     VotingPowerOverflow,

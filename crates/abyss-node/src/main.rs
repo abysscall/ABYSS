@@ -1,4 +1,4 @@
-﻿use std::env;
+use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use abyss_core::{hashing, Chain, ChainConfig, Coin, GenesisConfig, Mempool, Transaction};
@@ -740,4 +740,3 @@ fn now_ms() -> u64 {
 fn json_escape(value: &str) -> String {
     value.replace('\\', "\\\\").replace('"', "\\\"")
 }
-
