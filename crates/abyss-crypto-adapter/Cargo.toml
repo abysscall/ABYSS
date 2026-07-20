@@ -9,3 +9,4 @@ publish = false
 abyss-crypto-api = { path = "../abyss-crypto-api" }
 ed25519-dalek = "1.0"
 rand = "0.7"
+secrecy = "0.7"
