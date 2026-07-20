@@ -50,7 +50,7 @@ The primary rule is:
 
 | Transaction | ✅ Reviewed | 9.7 | Add transaction version later |
 
-| Block | ✅ Reviewed | 9.8 | Replace transaction hash with Merkle Root |
+| Block | ✅ Reviewed | 9.8 | Transactions root now a binary Merkle tree over tx IDs |
 
 | Chain | ✅ Reviewed | 9.9 | Separate execution and state in future |
 
