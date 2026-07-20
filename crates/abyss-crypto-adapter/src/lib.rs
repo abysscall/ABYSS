@@ -54,3 +54,28 @@ impl VerifierTrait for Ed25519Verifier {
         pubkey.verify(msg, sig).is_ok()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ed25519_dalek::{Signature, Signer, Verifier};
+
+    #[test]
+    fn sign_and_verify_roundtrip() {
+        let kp = Ed25519Keypair::generate();
+        let msg = b"test message";
+        let sig: Signature = kp.sign(msg);
+        let pubkey = kp.public();
+        assert!(Ed25519Verifier::verify(pubkey, msg, &sig));
+    }
+
+    #[test]
+    fn different_message_fails_verification() {
+        let kp = Ed25519Keypair::generate();
+        let msg = b"message one";
+        let other = b"message two";
+        let sig = kp.sign(msg);
+        let pubkey = kp.public();
+        assert!(!Ed25519Verifier::verify(pubkey, other, &sig));
+    }
+}
