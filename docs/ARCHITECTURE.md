@@ -59,8 +59,8 @@ abyss-social
 
 ```
 ┌─────────────────────────────────────────┐
-│  Public Execution (EVM-compatible)      │
-│  DEX contracts · Governance · ERC-20   │
+│  Public Execution (Scalable apps)       │
+│  DEX · Governance · Wrapped tokens      │
 ├─────────────────────────────────────────┤
 │  Private Execution (ZK circuit layer)  │
 │  Shielded transfers · Private contracts │
