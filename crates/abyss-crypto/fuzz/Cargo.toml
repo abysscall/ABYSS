@@ -1,0 +1,27 @@
+[package]
+name = "abyss-crypto-fuzz"
+version = "0.0.0"
+publish = false
+edition.workspace = true
+
+[[bin]]
+name = "fuzz_signature_deserialization"
+path = "fuzz_targets/fuzz_signature_deserialization.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_keypair_generation"
+path = "fuzz_targets/fuzz_keypair_generation.rs"
+test = false
+doc = false
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+abyss-crypto = { path = "..", features = ["libfuzzer"] }
+arbitrary = { version = "1.4", features = ["derive"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

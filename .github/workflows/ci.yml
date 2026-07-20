@@ -17,11 +17,22 @@ jobs:
           components: rustfmt, clippy
       - name: Install cargo-deny
         run: cargo install cargo-deny
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
       - name: cargo-deny check
         run: cargo deny check advisories licenses bans sources
+      - name: cargo-audit check
+        run: cargo audit
       - name: fmt check
         run: cargo fmt -- --check
       - name: clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: test
         run: cargo test --workspace --all-features --verbose
+      - name: fuzz signature deserialization
+        continue-on-error: true
+        run: cargo +nightly fuzz run fuzz_signature_deserialization -C crates/abyss-crypto/fuzz -- -max_len=65536 -timeout=10 -runs=10000
+      - name: fuzz keypair generation
+        continue-on-error: true
+        run: cargo +nightly fuzz run fuzz_keypair_generation -C crates/abyss-crypto/fuzz -- -max_len=65536 -timeout=10 -runs=10000
+
