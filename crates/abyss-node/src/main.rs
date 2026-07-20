@@ -55,11 +55,11 @@ fn run() -> Result<(), String> {
     }
 }
 
-// ── presale secondary-window ──────────────────────────────────────────────────
+// в”Ђв”Ђ presale secondary-window в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 //
 // Investor Secondary Window: Stage I investors may list their tokens for P2P
 // sale to new participants at $3.00/AC. ABYSS facilitates but does NOT
-// purchase tokens itself — no buyback obligation.
+// purchase tokens itself вЂ” no buyback obligation.
 //
 // Usage:
 //   abyss-node presale secondary-window --tokens=<ac> [--json]
@@ -100,7 +100,7 @@ fn quote_secondary_window(args: Vec<String>) -> Result<(), String> {
     if info_only || tokens_ac.is_none() {
         if json {
             println!(
-                "{{\n  \"id\": \"{}\",\n  \"name\": \"{}\",\n  \"price_usd_cents\": {},\n  \"registration_days\": {},\n  \"min_listing_bps\": {},\n  \"min_listing_ac\": {},\n  \"eligible_sellers\": \"Stage I investors only\",\n  \"eligible_buyers\": \"any participant\",\n  \"abyss_obligation\": \"none — facilitated P2P market, not a buyback\"\n}}",
+                "{{\n  \"id\": \"{}\",\n  \"name\": \"{}\",\n  \"price_usd_cents\": {},\n  \"registration_days\": {},\n  \"min_listing_bps\": {},\n  \"min_listing_ac\": {},\n  \"eligible_sellers\": \"Stage I investors only\",\n  \"eligible_buyers\": \"any participant\",\n  \"abyss_obligation\": \"none вЂ” facilitated P2P market, not a buyback\"\n}}",
                 window.id, window.name, window.price_usd_cents,
                 window.registration_days, window.min_listing_bps, window.min_listing_ac()
             );
@@ -123,7 +123,7 @@ fn quote_secondary_window(args: Vec<String>) -> Result<(), String> {
             );
             println!("eligible sellers   : Stage I investors only");
             println!("eligible buyers    : any participant");
-            println!("abyss obligation   : NONE — facilitated P2P market, not a buyback");
+            println!("abyss obligation   : NONE вЂ” facilitated P2P market, not a buyback");
             println!();
             println!("note: submit --tokens=<amount> to calculate a specific listing quote");
         }
@@ -151,7 +151,7 @@ fn quote_secondary_window(args: Vec<String>) -> Result<(), String> {
         return Ok(());
     }
 
-    println!("ABYSS Investor Secondary Window — listing quote");
+    println!("ABYSS Investor Secondary Window вЂ” listing quote");
     println!("window             : {} ({})", window.name, window.id);
     println!("tokens_to_list     : {}", listing.tokens_to_list);
     println!(
@@ -168,7 +168,7 @@ fn quote_secondary_window(args: Vec<String>) -> Result<(), String> {
         "min_listing        : {} AC (50% of Stage I slot)",
         window.min_listing_ac()
     );
-    println!("abyss_obligation   : NONE — P2P facilitated market");
+    println!("abyss_obligation   : NONE вЂ” P2P facilitated market");
     println!(
         "status             : quote only; submit intent via website during registration phase"
     );
@@ -176,7 +176,7 @@ fn quote_secondary_window(args: Vec<String>) -> Result<(), String> {
     Ok(())
 }
 
-// ── presale quote ─────────────────────────────────────────────────────────────
+// в”Ђв”Ђ presale quote в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 fn quote_presale(args: Vec<String>) -> Result<(), String> {
     let request = PresaleQuoteRequest::parse(args)?;
@@ -254,7 +254,7 @@ impl PresaleQuoteRequest {
         let mut jurisdiction = "EU".to_string();
         let mut round_id = "public-stage-1".to_string();
         let mut amount = None;
-        let mut max = 10_000_00;
+        let mut max = 1_000_000;
         let mut kyc_approved = false;
         let mut professional = false;
         let mut json = false;
@@ -304,7 +304,7 @@ impl PresaleQuoteRequest {
     }
 }
 
-// ── presale dex-quote ─────────────────────────────────────────────────────────
+// в”Ђв”Ђ presale dex-quote в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 fn quote_dex_final_sale(args: Vec<String>) -> Result<(), String> {
     let mut amount = None;
@@ -346,7 +346,7 @@ fn quote_dex_final_sale(args: Vec<String>) -> Result<(), String> {
     Ok(())
 }
 
-// ── tokenomics ────────────────────────────────────────────────────────────────
+// в”Ђв”Ђ tokenomics в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 fn print_tokenomics(args: Vec<String>) -> Result<(), String> {
     let json = args.iter().any(|a| a == "--json");
@@ -442,7 +442,7 @@ fn print_tokenomics(args: Vec<String>) -> Result<(), String> {
     Ok(())
 }
 
-// ── vesting ───────────────────────────────────────────────────────────────────
+// в”Ђв”Ђ vesting в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 fn print_vesting(args: Vec<String>) -> Result<(), String> {
     let json = args.iter().any(|a| a == "--json");
@@ -481,7 +481,7 @@ fn print_vesting(args: Vec<String>) -> Result<(), String> {
     Ok(())
 }
 
-// ── social ────────────────────────────────────────────────────────────────────
+// в”Ђв”Ђ social в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 fn run_social_demo() -> Result<(), String> {
     let now = now_ms();
@@ -624,7 +624,7 @@ fn social_post(args: Vec<String>) -> Result<(), String> {
     Ok(())
 }
 
-// ── account ───────────────────────────────────────────────────────────────────
+// в”Ђв”Ђ account в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 fn create_account(label: &str) {
     let account = WalletAccount::generate(label);
@@ -639,7 +639,7 @@ fn create_account(label: &str) {
     println!("warning: dev account only; production key storage is not implemented yet");
 }
 
-// ── devnet ────────────────────────────────────────────────────────────────────
+// в”Ђв”Ђ devnet в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 fn run_devnet() -> Result<(), String> {
     let treasury_account = WalletAccount::from_dev_seed("treasury", "abyss:genesis:treasury");
@@ -707,7 +707,7 @@ fn run_devnet() -> Result<(), String> {
     Ok(())
 }
 
-// ── help ──────────────────────────────────────────────────────────────────────
+// в”Ђв”Ђ help в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 fn print_help() {
     println!("ABYSS Node");
