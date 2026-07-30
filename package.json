@@ -1,0 +1,26 @@
+{
+  "name": "primary",
+  "version": "1.0.0",
+  "description": "ABYSS is a privacy-first autonomous blockchain ecosystem with a native coin, confidential applications, a native DEX, a private wallet, a private social network, and configurable AI agents for every account.",
+  "main": "form-submit.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abysscall/ABYSS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/abysscall/ABYSS/issues"
+  },
+  "homepage": "https://github.com/abysscall/ABYSS#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
