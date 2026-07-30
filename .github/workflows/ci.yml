@@ -23,6 +23,8 @@ jobs:
         run: cargo deny check advisories licenses bans sources
       - name: cargo-audit check
         run: cargo audit
+      - name: privacy-terms smoke check
+        run: python3 tools/privacy/check_privacy_terms.py
       - name: fmt check
         run: cargo fmt -- --check
       - name: clippy
