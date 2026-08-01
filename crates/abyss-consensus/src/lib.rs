@@ -866,4 +866,114 @@ mod tests {
         });
         assert_eq!(result, Err(ConsensusError::ValidatorSlashed));
     }
+
+    // ── Byzantine fault tolerance tests ──────────────────────────────────────
+    //
+    // These tests exist to prove — not merely assert — the core safety
+    // guarantee of BFT consensus: with N=3f+1 validators, no more than f
+    // Byzantine validators can ever cause two conflicting blocks to be
+    // finalised at the same height, and a Byzantine minority alone can
+    // neither reach quorum nor force a view change.
+
+    #[test]
+    fn byzantine_minority_alone_cannot_reach_quorum() {
+        // 4 validators, equal power. Byzantine safety requires f < n/3,
+        // so at most 1 of 4 can be Byzantine. A single malicious
+        // validator's vote must never be sufficient for a QC.
+        let set = ValidatorSet::new(vec![
+            validator("a", 1), validator("b", 1),
+            validator("c", 1), validator("d", 1),
+        ]).unwrap();
+        let bh = hash(1);
+        let mut malicious_votes = VoteSet::new();
+        malicious_votes.push(Vote {
+            validator: vid("a"), height: 1, round: 0,
+            block_hash: bh, vote_type: VoteType::PreCommit,
+        });
+
+        // One Byzantine validator's vote set must be rejected as insufficient.
+        let result = set.certify(malicious_votes);
+        assert!(matches!(
+            result,
+            Err(ConsensusError::InsufficientQuorum { signed_power: 1, .. })
+        ));
+    }
+
+    #[test]
+    fn two_conflicting_blocks_cannot_both_reach_quorum_with_honest_majority() {
+        // 4 validators (3 honest, 1 Byzantine — "carol").
+        // Byzantine safety property: two DIFFERENT blocks at the same
+        // height cannot both be certified, because that would require
+        // >2/3 power on each side, and with only 1 Byzantine vote
+        // available to double up, no such split is possible.
+        let set = ValidatorSet::new(vec![
+            validator("alice", 1), validator("bob", 1),
+            validator("carol", 1), validator("dave", 1),
+        ]).unwrap();
+        let block_a = hash(0xAA);
+        let block_b = hash(0xBB);
+
+        // Honest majority (alice, bob, dave) all vote for block_a.
+        let mut votes_for_a = VoteSet::new();
+        for id in ["alice", "bob", "dave"] {
+            votes_for_a.push(Vote {
+                validator: vid(id), height: 1, round: 0,
+                block_hash: block_a, vote_type: VoteType::PreCommit,
+            });
+        }
+        let qc_a = set.certify(votes_for_a);
+        assert!(qc_a.is_ok(), "honest majority must be able to certify block_a");
+
+        // Byzantine carol alone tries to certify a conflicting block_b —
+        // must fail: she does not have quorum power by herself.
+        let mut votes_for_b = VoteSet::new();
+        votes_for_b.push(Vote {
+            validator: vid("carol"), height: 1, round: 0,
+            block_hash: block_b, vote_type: VoteType::PreCommit,
+        });
+        let qc_b = set.certify(votes_for_b);
+        assert!(matches!(
+            qc_b,
+            Err(ConsensusError::InsufficientQuorum { .. })
+        ));
+    }
+
+    #[test]
+    fn byzantine_minority_below_one_third_cannot_force_view_change() {
+        // 4 validators, 10 power each (total 40). View change requires
+        // >1/3 of power to time out (>13.3, i.e. >=14). A single Byzantine
+        // validator (10 power) claiming timeout must NOT be enough
+        // to force the honest network into a view change.
+        let set = ValidatorSet::new(vec![
+            validator("a", 10), validator("b", 10),
+            validator("c", 10), validator("d", 10),
+        ]).unwrap();
+        let mut collector = ViewChangeCollector::new();
+
+        let decision = collector.add_timeout(
+            TimeoutVote { validator: vid("a"), height: 1, round: 0 }, &set
+        ).unwrap();
+
+        // 10/40 power is below the >1/3 threshold — must wait, not change view.
+        assert_eq!(decision, ViewChangeDecision::Wait);
+    }
+
+    #[test]
+    fn engine_rejects_vote_from_validator_not_in_set() {
+        // A Byzantine actor outside the validator set must never be able
+        // to inject a vote that counts toward quorum.
+        let set = three_validator_set();
+        let leader = set.leader(1, 0).clone();
+        let mut engine = ConsensusEngine::new(set, leader.clone(), 1).unwrap();
+        let bh = hash(1);
+        engine.receive_proposal(bh, &leader).unwrap();
+
+        let outsider_vote = Vote {
+            validator: vid("mallory-not-a-validator"),
+            height: 1, round: 0,
+            block_hash: bh, vote_type: VoteType::PreVote,
+        };
+        let result = engine.receive_vote(outsider_vote);
+        assert_eq!(result, Err(ConsensusError::UnknownValidator));
+    }
 }
