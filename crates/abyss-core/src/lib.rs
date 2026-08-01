@@ -3,6 +3,9 @@
 //! This crate intentionally starts with a small transparent devnet model. The
 //! shielded note system, zk circuits, and production cryptography will replace
 //! the placeholder hashing and transparent transaction model in later phases.
+//!
+//! Per ADR-0005: account/ledger state lives in `state` (State, separated
+//! from Chain's block-sequencing responsibility).
 
 pub mod address;
 pub mod block;
@@ -11,6 +14,7 @@ pub mod coin;
 pub mod genesis;
 pub mod hashing;
 pub mod mempool;
+pub mod state;
 pub mod storage;
 pub mod transaction;
 
@@ -20,5 +24,6 @@ pub use chain::{ApplyError, Chain, ChainConfig};
 pub use coin::{Coin, COIN, MAX_SUPPLY};
 pub use genesis::GenesisConfig;
 pub use mempool::{Mempool, MempoolError};
+pub use state::{State, StateError};
 pub use storage::{init_devnet_chain, load_chain, save_chain, StorageError};
 pub use transaction::{Transaction, TransactionId};

@@ -1,0 +1,84 @@
+# ADR-0017 — ABYSS Privacy & Cryptography Principles (v1.1)
+
+Status: Proposed
+Date: 2026-07-30
+
+Authors: ABYSS Core Team (owner: project lead)
+
+## Context
+The ABYSS project requires a formal, auditable set of principles that govern privacy, cryptography and long-term security decisions. These principles must be used as normative guidance for all major design choices (consensus, VM, wallets, bridges, governance, and economic design).
+
+This ADR codifies the "Privacy Architecture" draft and elevates it to an official project policy.
+
+## Decision
+Adopt the following twelve principles as the authoritative ABYSS Privacy & Cryptography Principles. These principles are normative: new design proposals must include a short checklist confirming compliance (or a written exception approved by governance).
+
+### 1. Formal Verification First
+Critical crypto and consensus code must be written with verifiability in mind and have a documented plan for formal proofs or model checking. Priority list: crypto libraries, proofs generation & verification, consensus, key management, RNG.
+
+### 2. Privacy Budget
+Every new module requires a Privacy Review assessing metadata leakage (timestamps, message sizes, IPs, routing, timings, transaction sizes, linkage). Modules that increase deanonymization risk must be redesigned or mitigated.
+
+### 3. Cryptographic Agility
+All crypto primitives must be pluggable and versioned. Support coexistence of multiple schemes and safe migration paths.
+
+### 4. No Trusted Setup
+Prefer transparent proof systems (zk-STARKs, Bulletproofs, modern transparent ZK schemes). Trusted-setup schemes are disallowed unless governance approves a compelling, documented exception with a strict audit plan.
+
+### 5. Quantum Migration Ready
+Design with post-quantum migration paths: modular signature and KDF layers, dual-signature/transitional strategies, and migration policies documented in ADRs.
+
+### 6. Minimal Metadata Principle
+Minimize and, where possible, obfuscate metadata: remove unnecessary headers/identifiers, avoid fixed-size fingerprints, and add defenses against pattern replay.
+
+### 7. Privacy Regression Testing
+Introduce automated privacy regression tests in CI (deanonymization, correlation, timing, clustering, AI-driven analysis). PRs reducing measured privacy scores are blocked until mitigations are added.
+
+### 8. AI Red Team
+Run periodic AI-driven red-team exercises (quarterly) to evaluate de-anonymization risks using modern LLMs and statistical ML. Findings feed mitigation roadmap and ADR updates.
+
+### 9. Zero-Knowledge Ecosystem
+Promote ZK use beyond transactions: identity, voting, DAO, private contracts, staking privacy, reserves proofs, and private bridges. Provide SDKs and ADRs for ZK integration.
+
+### 10. Decentralization Above Convenience
+Prefer decentralized, permissionless solutions over convenience when the latter degrades independence, anonymity, or decentralization.
+
+### 11. Long-Term Security Horizon
+Evaluate design choices across 5/10/20-year threat horizons, considering advances in compute, cryptanalysis and ML.
+
+### 12. Open Scientific Architecture
+Document design rationales, threat models, ADRs, migration plans and alternatives for independent scientific review.
+
+## Acceptance Criteria
+- ADR file committed to the repo under adr/ and referenced in CONTRIBUTING.md and governance docs.
+- CI gate: privacy regression test suite runs (initial smoke checks) and is included in PR checklist.
+- Each major new module supplies a Compliance Checklist mapping design to ADR principles.
+
+## Compliance Checklist (to include with PRs)
+- Is this change formally verifiable? (Y/N + notes)
+- Does it affect privacy budget? (Y/N + metrics)
+- Is crypto implemented via pluggable primitives? (Y/N + versions)
+- Does it require trusted setup? (Y/N + justification)
+- Post-quantum migration plan included? (Y/N)
+- Tests: privacy regression tests added/updated? (Y/N)
+- Documentation: threat model and ADR link added? (Y/N)
+
+## Governance & Exceptions
+Exceptions to these principles require:
+1. Written justification (technical + business)
+2. Security & privacy review by at least two independent auditors or community reviewers
+3. Approval by the core maintainers or on-chain governance (for protocol-level changes)
+
+## Implementation Roadmap (initial)
+- Q3 2026: Merge ADR-0017 and add PR template compliance checklist
+- Q4 2026: Add minimal privacy regression test harness and CI smoke tests
+- Q1 2027: Run first AI Red Team exercise and publish summary
+- Ongoing: Gradual adaptation of components (crypto adapters, ZK SDKs, formal verification plans)
+
+## References
+- ABYSS Privacy Architecture draft
+- ADR-0015 (native-first strategy) — ensure it explicitly contains Principle of Independence
+
+---
+
+Signed-off-by: ABYSS Core Team
