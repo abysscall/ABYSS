@@ -1,9 +1,9 @@
-﻿//! abyss-crypto-adapter — production-ready adapter using ed25519-dalek
+//! abyss-crypto-adapter — production-ready adapter using ed25519-dalek
 //!
 //! This crate provides a secure implementation of the abyss-crypto-api traits using
 //! audited cryptographic libraries (ed25519-dalek) and secure practices:
 //! - OS-provided random number generation (OsRng)
-//! - Secret key protection via secrecy crate
+//! - Secret key zeroed on drop (ed25519-dalek's built-in `zeroize` feature — see below)
 //! - Standard ed25519 signatures (RFC 8032)
 
 use abyss_crypto_api::{Keypair as KeypairTrait, Signer as SignerTrait, Verifier as VerifierTrait};
@@ -12,7 +12,15 @@ use rand::rngs::OsRng;
 use rand::RngCore;
 
 /// Ed25519 Keypair wrapper implementing the repository traits.
-/// The secret key is protected via secure practices and will be zeroed on drop.
+///
+/// Secret-key zeroing: `ed25519_dalek::SigningKey` implements `Drop` +
+/// `ZeroizeOnDrop` itself whenever the crate's `zeroize` feature is enabled
+/// (it is on by default — see this crate's `Cargo.toml`). Because
+/// `signing_key` is a plain field here, Rust's automatic field-drop already
+/// invokes that zeroization when an `Ed25519Keypair` goes out of scope; no
+/// custom `Drop` impl is needed (an earlier version of this file had an
+/// empty `Drop` impl that looked like it zeroed the key but did nothing —
+/// removed).
 pub struct Ed25519Keypair {
     signing_key: SigningKey,
     verifying_key: VerifyingKey,
@@ -55,14 +63,6 @@ impl SignerTrait for Ed25519Keypair {
 
     fn sign(&self, msg: &[u8]) -> Self::Signature {
         self.signing_key.sign(msg)
-    }
-}
-
-impl Drop for Ed25519Keypair {
-    fn drop(&mut self) {
-        // Zeroize the keypair on drop. Note: ed25519_dalek::SigningKey may
-        // implement Zeroize or use secure zeroing depending on version.
-        // For production, consider additional measures (e.g., mlock).
     }
 }
 

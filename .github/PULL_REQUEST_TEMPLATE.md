@@ -1,4 +1,4 @@
-﻿## Summary
+## Summary
 Short description of changes.
 
 ## Security impact

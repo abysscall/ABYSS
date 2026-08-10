@@ -20,14 +20,14 @@ impl TokenomicsPlan {
     /// ABYSS default plan.
     ///
     /// Max supply: 55,000,000 AC
-    ///   - Team Reserve  : 30,000,000 AC (54.5%) вЂ” vested, see `TeamVesting`
-    ///   - Public Sale   : 25,000,000 AC (45.5%) вЂ” distributed across sale_rounds
+    ///   - Team Reserve  : 30,000,000 AC (54.5%) — vested, see `TeamVesting`
+    ///   - Public Sale   : 25,000,000 AC (45.5%) — distributed across sale_rounds
     pub fn abyss_default() -> Self {
         Self {
             symbol: "AC",
             max_supply: Coin::MAX,
             allocations: vec![
-                // в”Ђв”Ђ Team Reserve side вЂ” sums to exactly 30,000,000 AC в”Ђв”Ђ
+                // ── Team Reserve side — sums to exactly 30,000,000 AC ──
                 Allocation::new("Validator rewards and network security", 1_500, 8_250_000),
                 Allocation::new(
                     "Ecosystem grants, apps, audits, bug bounties",
@@ -37,24 +37,24 @@ impl TokenomicsPlan {
                 Allocation::new("Foundation treasury with long vesting", 1_000, 5_500_000),
                 Allocation::new("Core contributors with long vesting", 1_000, 5_500_000),
                 Allocation::new("DEX liquidity reserve", 1_000, 5_250_000),
-                // в”Ђв”Ђ Public Sale side вЂ” sums to exactly 25,000,000 AC в”Ђв”Ђ
+                // ── Public Sale side — sums to exactly 25,000,000 AC ──
                 Allocation::new("Public sale and liquidity formation", 4_500, 25_000_000),
             ],
             sale_rounds: vec![
-                // 1. Sale to Investors вЂ” institutional, min ticket $500,000, max 4 slots
+                // 1. Sale to Investors — institutional, min ticket $500,000, max 4 slots
                 SaleRound::new("Sale to Investors", 2_000_000, 100, 500_000, 0),
-                // 2. Pre-Sale вЂ” early community allocation
+                // 2. Pre-Sale — early community allocation
                 SaleRound::new("Pre-Sale", 3_000_000, 200, 0, 0),
-                // 3. Sale Stage 1 вЂ” public open round
+                // 3. Sale Stage 1 — public open round
                 SaleRound::new("Sale Stage 1", 5_000_000, 300, 0, 0),
-                // 4. Sale Stage 2 вЂ” growth phase
+                // 4. Sale Stage 2 — growth phase
                 SaleRound::new("Sale Stage 2", 5_000_000, 400, 0, 0),
-                // 5. Sale Stage 3 вЂ” pre-final public round
+                // 5. Sale Stage 3 — pre-final public round
                 SaleRound::new("Sale Stage 3", 10_000_000, 500, 0, 0),
                 // NOTE: "Investor Secondary Window" (P2P secondary market,
                 // Stage I investors only) and "Final Sale В· DEX" (variable
                 // supply @ $5.00 via DEX test orders) are handled by
-                // `InvestorSecondaryWindow` and `DexFinalSale` respectively вЂ”
+                // `InvestorSecondaryWindow` and `DexFinalSale` respectively —
                 // they are not fixed-cap sale rounds.
             ],
         }
@@ -123,19 +123,19 @@ impl TokenomicsPlan {
     }
 }
 
-// в”Ђв”Ђ Investor Secondary Window в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+// ── Investor Secondary Window ──────────────────────────────────────────────────
 //
 // Replaces the former "Buyback" mechanism.
 //
 // After Sale Stage 1 closes, a two-phase window opens for Stage I investors
 // who wish to exit:
 //
-//   Phase A вЂ” Registration (14 days):
+//   Phase A — Registration (14 days):
 //     Stage I investors submit an intent listing stating how many tokens they
 //     wish to sell. Minimum listing: 50% of their allocation (в‰Ґ 250,000 AC
 //     per investor, since every Stage I slot is exactly 500,000 AC).
 //
-//   Phase B вЂ” Sales (until all listed tokens are sold):
+//   Phase B — Sales (until all listed tokens are sold):
 //     Any new or existing participant may purchase listed tokens at the
 //     fixed price of $3.00/AC. ABYSS facilitates the matching and records
 //     the transfer; it does not itself purchase any tokens.
@@ -155,7 +155,7 @@ pub struct InvestorSecondaryWindow {
     /// Duration of the registration phase in days.
     pub registration_days: u32,
     /// Minimum fraction of an investor's allocation they must list
-    /// (expressed in basis points of their holding вЂ” 5000 = 50%).
+    /// (expressed in basis points of their holding — 5000 = 50%).
     pub min_listing_bps: u16,
     /// Allocation per Stage I slot in AC. Used to compute the minimum
     /// listing in absolute token terms.
@@ -207,7 +207,7 @@ impl InvestorSecondaryWindow {
 pub struct SecondaryListing {
     pub investor_id: String,
     pub tokens_to_list: Coin,
-    /// Must be true вЂ” only Stage I investors may list.
+    /// Must be true — only Stage I investors may list.
     pub is_stage1_investor: bool,
 }
 
@@ -225,9 +225,9 @@ impl SecondaryListing {
     }
 }
 
-// в”Ђв”Ђ DexFinalSale в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+// ── DexFinalSale ───────────────────────────────────────────────────────────────
 
-/// Final Sale вЂ” executed via test orders on the ABYSS DEX at $5.00/AC.
+/// Final Sale — executed via test orders on the ABYSS DEX at $5.00/AC.
 /// Variable supply; no fixed token cap.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DexFinalSale {
@@ -258,7 +258,7 @@ impl DexFinalSale {
     }
 }
 
-// в”Ђв”Ђ TeamVesting в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+// ── TeamVesting ────────────────────────────────────────────────────────────────
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct TeamVesting {
@@ -316,7 +316,7 @@ impl TeamVesting {
     }
 }
 
-// в”Ђв”Ђ Supporting types в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+// ── Supporting types ───────────────────────────────────────────────────────────
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct InvestorProfile {
@@ -606,7 +606,7 @@ mod tests {
         );
     }
 
-    // в”Ђв”Ђ Investor Secondary Window tests в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+    // ── Investor Secondary Window tests ──────────────────────────────────────
 
     #[test]
     fn secondary_window_parameters_are_correct() {
@@ -674,7 +674,7 @@ mod tests {
         assert_eq!(payout, entry_cost * 3);
     }
 
-    // в”Ђв”Ђ DEX final sale в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+    // ── DEX final sale ────────────────────────────────────────────────────────
 
     #[test]
     fn dex_final_sale_prices_at_5_dollars() {
@@ -685,7 +685,7 @@ mod tests {
         );
     }
 
-    // в”Ђв”Ђ Vesting в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+    // ── Vesting ───────────────────────────────────────────────────────────────
 
     #[test]
     fn team_vesting_tranches_sum_to_30m() {
