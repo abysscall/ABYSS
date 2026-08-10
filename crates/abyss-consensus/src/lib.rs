@@ -7,8 +7,7 @@
 //! - `vote`      — VoteType, Vote, VoteSet, QuorumCertificate
 //! - `round`     — Phase, RoundState (the per-round BFT phase machine)
 //! - `view_change` — TimeoutVote, ViewChangeCollector (leader-failure handling)
-//! - `slashing`  — SlashingEvidence, SlashingRegistry (evidence API — see ADR-0021
-//!                 for why this is explicitly NOT the full slashing economics layer)
+//! - `slashing`  — SlashingEvidence, SlashingRegistry (evidence API — see ADR-0021 for why this is explicitly NOT the full slashing economics layer)
 //! - `engine`    — ConsensusEngine, the per-node driver tying the above together
 //! - `error`     — ConsensusError, shared across all modules
 //!

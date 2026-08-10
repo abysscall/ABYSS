@@ -116,7 +116,9 @@ impl RoundState {
         }
     }
 
-    pub fn is_committed(&self) -> bool { self.phase == Phase::Commit }
+    pub fn is_committed(&self) -> bool {
+        self.phase == Phase::Commit
+    }
 }
 
 #[cfg(test)]
@@ -136,15 +138,25 @@ mod tests {
         assert_eq!(round.phase, Phase::PreVote);
 
         for id in ["alice", "bob", "carol"] {
-            let vote = Vote { validator: vid(id), height: 1, round: 0,
-                block_hash: bh, vote_type: VoteType::PreVote };
+            let vote = Vote {
+                validator: vid(id),
+                height: 1,
+                round: 0,
+                block_hash: bh,
+                vote_type: VoteType::PreVote,
+            };
             round.add_prevote(vote, &set).unwrap();
         }
         assert_eq!(round.phase, Phase::PreCommit);
 
         for id in ["alice", "bob", "carol"] {
-            let vote = Vote { validator: vid(id), height: 1, round: 0,
-                block_hash: bh, vote_type: VoteType::PreCommit };
+            let vote = Vote {
+                validator: vid(id),
+                height: 1,
+                round: 0,
+                block_hash: bh,
+                vote_type: VoteType::PreCommit,
+            };
             round.add_precommit(vote, &set).unwrap();
         }
         assert_eq!(round.phase, Phase::Commit);
@@ -156,7 +168,9 @@ mod tests {
         let set = three_validator_set();
         let leader = set.leader(1, 0).clone();
         let mut round = RoundState::new(1, 0);
-        let non_leader = set.validator_ids().iter()
+        let non_leader = set
+            .validator_ids()
+            .iter()
             .find(|id| *id != &leader)
             .unwrap()
             .clone();

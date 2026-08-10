@@ -32,11 +32,21 @@ pub struct VoteSet {
 }
 
 impl VoteSet {
-    pub fn new() -> Self { Self::default() }
-    pub fn push(&mut self, vote: Vote) { self.votes.push(vote); }
-    pub fn len(&self) -> usize { self.votes.len() }
-    pub fn is_empty(&self) -> bool { self.votes.is_empty() }
-    pub fn iter(&self) -> std::slice::Iter<'_, Vote> { self.votes.iter() }
+    pub fn new() -> Self {
+        Self::default()
+    }
+    pub fn push(&mut self, vote: Vote) {
+        self.votes.push(vote);
+    }
+    pub fn len(&self) -> usize {
+        self.votes.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.votes.is_empty()
+    }
+    pub fn iter(&self) -> std::slice::Iter<'_, Vote> {
+        self.votes.iter()
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

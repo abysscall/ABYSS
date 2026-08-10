@@ -11,7 +11,10 @@ pub(crate) fn vid(s: &str) -> ValidatorId {
 }
 
 pub(crate) fn validator(id: &str, power: u64) -> Validator {
-    Validator { id: vid(id), voting_power: power }
+    Validator {
+        id: vid(id),
+        voting_power: power,
+    }
 }
 
 pub(crate) fn hash(byte: u8) -> Hash256 {
@@ -23,5 +26,6 @@ pub(crate) fn three_validator_set() -> ValidatorSet {
         validator("alice", 1),
         validator("bob", 1),
         validator("carol", 1),
-    ]).unwrap()
+    ])
+    .unwrap()
 }

@@ -71,19 +71,26 @@ impl Chain {
         nonces: std::collections::BTreeMap<String, u64>,
     ) -> Result<Self, ApplyError> {
         let state = State::from_raw(balances, nonces)?;
-        Ok(Self { config, blocks, state })
+        Ok(Self {
+            config,
+            blocks,
+            state,
+        })
     }
 
     // ── Accessors ─────────────────────────────────────────────────────────────
 
-    pub fn config(&self) -> &ChainConfig { &self.config }
+    pub fn config(&self) -> &ChainConfig {
+        &self.config
+    }
 
     pub fn height(&self) -> u64 {
         self.blocks.last().map(|b| b.header.height).unwrap_or(0)
     }
 
     pub fn tip_hash(&self) -> Hash256 {
-        self.blocks.last()
+        self.blocks
+            .last()
             .map(Block::hash)
             .unwrap_or_else(|| dev_hash(&"abyss:empty-chain"))
     }
@@ -96,15 +103,22 @@ impl Chain {
         self.state.nonce_of(address)
     }
 
-    pub fn blocks(&self) -> &[Block] { &self.blocks }
+    pub fn blocks(&self) -> &[Block] {
+        &self.blocks
+    }
 
-    pub fn state_root(&self) -> Hash256 { self.state.root() }
+    pub fn state_root(&self) -> Hash256 {
+        self.state.root()
+    }
 
     // ── State snapshot (for storage.rs compatibility) ─────────────────────────
 
     pub fn snapshot_state(
         &self,
-    ) -> (std::collections::BTreeMap<String, u64>, std::collections::BTreeMap<String, u64>) {
+    ) -> (
+        std::collections::BTreeMap<String, u64>,
+        std::collections::BTreeMap<String, u64>,
+    ) {
         self.state.to_raw()
     }
 
@@ -133,7 +147,10 @@ impl Chain {
         // Nonce check
         let expected = self.state.nonce_of(&tx.from);
         if tx.nonce != expected {
-            return Err(ApplyError::InvalidNonce { expected, actual: tx.nonce });
+            return Err(ApplyError::InvalidNonce {
+                expected,
+                actual: tx.nonce,
+            });
         }
 
         // Debit sender (amount + fee)
@@ -235,12 +252,24 @@ impl Chain {
 pub enum ApplyError {
     BalanceOverflow,
     Genesis(GenesisError),
-    InsufficientFunds { available: Coin, required: Coin },
-    InvalidNonce { expected: u64, actual: u64 },
+    InsufficientFunds {
+        available: Coin,
+        required: Coin,
+    },
+    InvalidNonce {
+        expected: u64,
+        actual: u64,
+    },
     PreviousHashMismatch,
     SelfTransfer,
-    StateRootMismatch { expected: Hash256, computed: Hash256 },
-    UnexpectedBlockHeight { expected: u64, actual: u64 },
+    StateRootMismatch {
+        expected: Hash256,
+        computed: Hash256,
+    },
+    UnexpectedBlockHeight {
+        expected: u64,
+        actual: u64,
+    },
     ZeroAmount,
 }
 
@@ -249,30 +278,44 @@ impl std::fmt::Display for ApplyError {
         match self {
             Self::BalanceOverflow => write!(f, "balance overflow"),
             Self::Genesis(e) => write!(f, "genesis error: {e:?}"),
-            Self::InsufficientFunds { available, required } =>
-                write!(f, "insufficient funds: have {available}, need {required}"),
-            Self::InvalidNonce { expected, actual } =>
-                write!(f, "invalid nonce: expected {expected}, got {actual}"),
+            Self::InsufficientFunds {
+                available,
+                required,
+            } => write!(f, "insufficient funds: have {available}, need {required}"),
+            Self::InvalidNonce { expected, actual } => {
+                write!(f, "invalid nonce: expected {expected}, got {actual}")
+            }
             Self::PreviousHashMismatch => write!(f, "previous_hash does not match tip"),
             Self::SelfTransfer => write!(f, "sender and receiver are the same address"),
-            Self::StateRootMismatch { .. } => write!(f, "state root mismatch after block execution"),
-            Self::UnexpectedBlockHeight { expected, actual } =>
-                write!(f, "unexpected block height: expected {expected}, got {actual}"),
+            Self::StateRootMismatch { .. } => {
+                write!(f, "state root mismatch after block execution")
+            }
+            Self::UnexpectedBlockHeight { expected, actual } => write!(
+                f,
+                "unexpected block height: expected {expected}, got {actual}"
+            ),
             Self::ZeroAmount => write!(f, "transaction amount is zero"),
         }
     }
 }
 
 impl From<GenesisError> for ApplyError {
-    fn from(e: GenesisError) -> Self { Self::Genesis(e) }
+    fn from(e: GenesisError) -> Self {
+        Self::Genesis(e)
+    }
 }
 
 impl From<StateError> for ApplyError {
     fn from(e: StateError) -> Self {
         match e {
             StateError::BalanceOverflow => Self::BalanceOverflow,
-            StateError::InsufficientFunds { available, required } =>
-                Self::InsufficientFunds { available, required },
+            StateError::InsufficientFunds {
+                available,
+                required,
+            } => Self::InsufficientFunds {
+                available,
+                required,
+            },
             StateError::Address(_) => Self::BalanceOverflow,
         }
     }
@@ -290,7 +333,8 @@ mod tests {
             ChainConfig::default(),
             GenesisConfig::single_treasury(treasury),
             0,
-        ).unwrap()
+        )
+        .unwrap()
     }
 
     #[test]
@@ -304,8 +348,11 @@ mod tests {
         let treasury = Address::new("treasury").unwrap();
         let alice = Address::new("alice").unwrap();
         let tx = Transaction::new(
-            treasury.clone(), alice.clone(),
-            Coin::from_ac(10).unwrap(), Coin::from_micro_ac(100).unwrap(), 0,
+            treasury.clone(),
+            alice.clone(),
+            Coin::from_ac(10).unwrap(),
+            Coin::from_micro_ac(100).unwrap(),
+            0,
         );
         chain.produce_block("validator-1", 1_000, vec![tx]).unwrap();
 
@@ -319,12 +366,13 @@ mod tests {
         let mut chain = chain();
         let treasury = Address::new("treasury").unwrap();
         let alice = Address::new("alice").unwrap();
-        let tx = Transaction::new(
-            treasury, alice, Coin::from_ac(1).unwrap(), Coin::ZERO, 1,
-        );
+        let tx = Transaction::new(treasury, alice, Coin::from_ac(1).unwrap(), Coin::ZERO, 1);
         assert!(matches!(
             chain.produce_block("v1", 1_000, vec![tx]),
-            Err(ApplyError::InvalidNonce { expected: 0, actual: 1 })
+            Err(ApplyError::InvalidNonce {
+                expected: 0,
+                actual: 1
+            })
         ));
     }
 
@@ -335,13 +383,23 @@ mod tests {
         let alice = Address::new("alice").unwrap();
         let bob = Address::new("bob").unwrap();
         let valid = Transaction::new(
-            treasury.clone(), alice.clone(), Coin::from_ac(1).unwrap(), Coin::ZERO, 0,
+            treasury.clone(),
+            alice.clone(),
+            Coin::from_ac(1).unwrap(),
+            Coin::ZERO,
+            0,
         );
         // invalid: same nonce as valid (would be a replay)
         let invalid = Transaction::new(
-            treasury.clone(), bob, Coin::from_ac(1).unwrap(), Coin::ZERO, 0,
+            treasury.clone(),
+            bob,
+            Coin::from_ac(1).unwrap(),
+            Coin::ZERO,
+            0,
         );
-        assert!(chain.produce_block("v1", 1_000, vec![valid, invalid]).is_err());
+        assert!(chain
+            .produce_block("v1", 1_000, vec![valid, invalid])
+            .is_err());
         assert_eq!(chain.height(), 0);
         assert_eq!(chain.next_nonce(&treasury), 0);
         assert_eq!(chain.balance_of(&alice), Coin::ZERO);
@@ -352,11 +410,11 @@ mod tests {
         let mut proposer_chain = chain();
         let treasury = Address::new("treasury").unwrap();
         let alice = Address::new("alice").unwrap();
-        let tx = Transaction::new(
-            treasury, alice, Coin::from_ac(5).unwrap(), Coin::ZERO, 0,
-        );
+        let tx = Transaction::new(treasury, alice, Coin::from_ac(5).unwrap(), Coin::ZERO, 0);
         // Proposer produces block
-        proposer_chain.produce_block("proposer", 1_000, vec![tx.clone()]).unwrap();
+        proposer_chain
+            .produce_block("proposer", 1_000, vec![tx.clone()])
+            .unwrap();
         let block = proposer_chain.blocks().last().unwrap().clone();
 
         // Validator applies the same block
@@ -377,9 +435,7 @@ mod tests {
         let mut chain = chain();
         let treasury = Address::new("treasury").unwrap();
         let alice = Address::new("alice").unwrap();
-        let tx = Transaction::new(
-            treasury, alice, Coin::from_ac(1).unwrap(), Coin::ZERO, 0,
-        );
+        let tx = Transaction::new(treasury, alice, Coin::from_ac(1).unwrap(), Coin::ZERO, 0);
         let mut other = chain.clone();
         other.produce_block("proposer", 1_000, vec![tx]).unwrap();
         let block_h1 = other.blocks().last().unwrap().clone();
@@ -387,7 +443,10 @@ mod tests {
         // Try to apply block at height 1 to a chain already at height 1
         chain.apply_block(block_h1.clone()).unwrap();
         let result = chain.apply_block(block_h1);
-        assert!(matches!(result, Err(ApplyError::UnexpectedBlockHeight { .. })));
+        assert!(matches!(
+            result,
+            Err(ApplyError::UnexpectedBlockHeight { .. })
+        ));
     }
 
     #[test]
@@ -396,11 +455,11 @@ mod tests {
         let mut validator = chain();
         let treasury = Address::new("treasury").unwrap();
         let alice = Address::new("alice").unwrap();
-        let tx = Transaction::new(
-            treasury, alice, Coin::from_ac(10).unwrap(), Coin::ZERO, 0,
-        );
+        let tx = Transaction::new(treasury, alice, Coin::from_ac(10).unwrap(), Coin::ZERO, 0);
 
-        proposer.produce_block("proposer", 1_000, vec![tx.clone()]).unwrap();
+        proposer
+            .produce_block("proposer", 1_000, vec![tx.clone()])
+            .unwrap();
         let block = proposer.blocks().last().unwrap().clone();
         validator.apply_block(block).unwrap();
 

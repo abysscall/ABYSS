@@ -45,10 +45,8 @@ impl ConsensusEngine {
 
     /// Returns the current leader (deterministic, based on height + round).
     pub fn current_leader(&self) -> &ValidatorId {
-        self.validator_set.leader(
-            self.current_round.height,
-            self.current_round.round,
-        )
+        self.validator_set
+            .leader(self.current_round.height, self.current_round.round)
     }
 
     pub fn is_leader(&self) -> bool {
@@ -61,7 +59,8 @@ impl ConsensusEngine {
         from: &ValidatorId,
     ) -> Result<(), ConsensusError> {
         let leader = self.current_leader().clone();
-        self.current_round.receive_proposal(block_hash, &leader, from)
+        self.current_round
+            .receive_proposal(block_hash, &leader, from)
     }
 
     /// Process a vote from the network.
@@ -140,12 +139,26 @@ mod tests {
         engine.receive_proposal(bh, &leader).unwrap();
 
         for id in ["alice", "bob", "carol"] {
-            engine.receive_vote(Vote { validator: vid(id), height: 1, round: 0,
-                block_hash: bh, vote_type: VoteType::PreVote }).unwrap();
+            engine
+                .receive_vote(Vote {
+                    validator: vid(id),
+                    height: 1,
+                    round: 0,
+                    block_hash: bh,
+                    vote_type: VoteType::PreVote,
+                })
+                .unwrap();
         }
         for id in ["alice", "bob", "carol"] {
-            engine.receive_vote(Vote { validator: vid(id), height: 1, round: 0,
-                block_hash: bh, vote_type: VoteType::PreCommit }).unwrap();
+            engine
+                .receive_vote(Vote {
+                    validator: vid(id),
+                    height: 1,
+                    round: 0,
+                    block_hash: bh,
+                    vote_type: VoteType::PreCommit,
+                })
+                .unwrap();
         }
 
         assert!(engine.current_round.is_committed());
@@ -162,9 +175,13 @@ mod tests {
         let mut engine = ConsensusEngine::new(set, leader.clone(), 1).unwrap();
 
         for id in ["alice", "bob"] {
-            engine.receive_timeout(TimeoutVote {
-                validator: vid(id), height: 1, round: 0,
-            }).unwrap();
+            engine
+                .receive_timeout(TimeoutVote {
+                    validator: vid(id),
+                    height: 1,
+                    round: 0,
+                })
+                .unwrap();
         }
         engine.advance_round();
         assert_eq!(engine.current_round.round, 1);
@@ -180,13 +197,19 @@ mod tests {
 
         engine.receive_proposal(bh, &leader).unwrap();
         engine.submit_evidence(SlashingEvidence::DoubleVote {
-            validator: vid("alice"), height: 1, round: 0,
-            hash_a: hash(1), hash_b: hash(2),
+            validator: vid("alice"),
+            height: 1,
+            round: 0,
+            hash_a: hash(1),
+            hash_b: hash(2),
         });
 
         let result = engine.receive_vote(Vote {
-            validator: vid("alice"), height: 1, round: 0,
-            block_hash: bh, vote_type: VoteType::PreVote,
+            validator: vid("alice"),
+            height: 1,
+            round: 0,
+            block_hash: bh,
+            vote_type: VoteType::PreVote,
         });
         assert_eq!(result, Err(ConsensusError::ValidatorSlashed));
     }
@@ -203,8 +226,10 @@ mod tests {
 
         let outsider_vote = Vote {
             validator: vid("mallory-not-a-validator"),
-            height: 1, round: 0,
-            block_hash: bh, vote_type: VoteType::PreVote,
+            height: 1,
+            round: 0,
+            block_hash: bh,
+            vote_type: VoteType::PreVote,
         };
         let result = engine.receive_vote(outsider_vote);
         assert_eq!(result, Err(ConsensusError::UnknownValidator));

@@ -9,11 +9,20 @@ pub enum ConsensusError {
     DuplicateValidator,
     DuplicateVote,
     EmptyValidatorSet,
-    InsufficientQuorum { signed_power: u64, required_power: u64 },
+    InsufficientQuorum {
+        signed_power: u64,
+        required_power: u64,
+    },
     InvalidValidatorId,
     NotCommitted,
-    NotTheLeader { expected: ValidatorId, actual: ValidatorId },
-    UnexpectedPhase { expected: Phase, actual: Phase },
+    NotTheLeader {
+        expected: ValidatorId,
+        actual: ValidatorId,
+    },
+    UnexpectedPhase {
+        expected: Phase,
+        actual: Phase,
+    },
     UnknownValidator,
     ValidatorSlashed,
     VotingPowerOverflow,
@@ -28,14 +37,18 @@ impl std::fmt::Display for ConsensusError {
             Self::DuplicateValidator => write!(f, "duplicate validator id"),
             Self::DuplicateVote => write!(f, "duplicate vote from same validator"),
             Self::EmptyValidatorSet => write!(f, "validator set is empty"),
-            Self::InsufficientQuorum { signed_power, required_power } =>
-                write!(f, "insufficient quorum: {signed_power}/{required_power}"),
+            Self::InsufficientQuorum {
+                signed_power,
+                required_power,
+            } => write!(f, "insufficient quorum: {signed_power}/{required_power}"),
             Self::InvalidValidatorId => write!(f, "validator id must not be empty"),
             Self::NotCommitted => write!(f, "round is not in Commit phase"),
-            Self::NotTheLeader { expected, actual } =>
-                write!(f, "proposal from {actual}, expected leader {expected}"),
-            Self::UnexpectedPhase { expected, actual } =>
-                write!(f, "unexpected phase: expected {expected:?}, got {actual:?}"),
+            Self::NotTheLeader { expected, actual } => {
+                write!(f, "proposal from {actual}, expected leader {expected}")
+            }
+            Self::UnexpectedPhase { expected, actual } => {
+                write!(f, "unexpected phase: expected {expected:?}, got {actual:?}")
+            }
             Self::UnknownValidator => write!(f, "unknown validator"),
             Self::ValidatorSlashed => write!(f, "validator has been slashed"),
             Self::VotingPowerOverflow => write!(f, "voting power overflow"),

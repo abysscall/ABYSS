@@ -33,7 +33,9 @@ pub struct ViewChangeCollector {
 }
 
 impl ViewChangeCollector {
-    pub fn new() -> Self { Self::default() }
+    pub fn new() -> Self {
+        Self::default()
+    }
 
     pub fn add_timeout(
         &mut self,
@@ -45,7 +47,9 @@ impl ViewChangeCollector {
         }
         self.timeouts.insert(timeout.validator.clone(), timeout);
 
-        let timed_out_power: u64 = self.timeouts.keys()
+        let timed_out_power: u64 = self
+            .timeouts
+            .keys()
             .filter_map(|id| validator_set.voting_power(id))
             .sum();
 
@@ -59,7 +63,9 @@ impl ViewChangeCollector {
         }
     }
 
-    pub fn timeout_count(&self) -> usize { self.timeouts.len() }
+    pub fn timeout_count(&self) -> usize {
+        self.timeouts.len()
+    }
 }
 
 #[cfg(test)]
@@ -70,19 +76,36 @@ mod tests {
     #[test]
     fn view_change_triggers_when_third_of_power_times_out() {
         let set = ValidatorSet::new(vec![
-            validator("a", 10), validator("b", 10),
-            validator("c", 10), validator("d", 10),
-        ]).unwrap(); // total = 40, trigger at >13
+            validator("a", 10),
+            validator("b", 10),
+            validator("c", 10),
+            validator("d", 10),
+        ])
+        .unwrap(); // total = 40, trigger at >13
         let mut collector = ViewChangeCollector::new();
 
-        let t1 = collector.add_timeout(
-            TimeoutVote { validator: vid("a"), height: 1, round: 0 }, &set
-        ).unwrap();
+        let t1 = collector
+            .add_timeout(
+                TimeoutVote {
+                    validator: vid("a"),
+                    height: 1,
+                    round: 0,
+                },
+                &set,
+            )
+            .unwrap();
         assert_eq!(t1, ViewChangeDecision::Wait); // 10/40
 
-        let t2 = collector.add_timeout(
-            TimeoutVote { validator: vid("b"), height: 1, round: 0 }, &set
-        ).unwrap();
+        let t2 = collector
+            .add_timeout(
+                TimeoutVote {
+                    validator: vid("b"),
+                    height: 1,
+                    round: 0,
+                },
+                &set,
+            )
+            .unwrap();
         assert_eq!(t2, ViewChangeDecision::ChangeView); // 20/40 > 13.3
     }
 
@@ -93,14 +116,24 @@ mod tests {
         // A single Byzantine validator (10/40 power) claiming timeout
         // must NOT be enough to force the honest network into a view change.
         let set = ValidatorSet::new(vec![
-            validator("a", 10), validator("b", 10),
-            validator("c", 10), validator("d", 10),
-        ]).unwrap();
+            validator("a", 10),
+            validator("b", 10),
+            validator("c", 10),
+            validator("d", 10),
+        ])
+        .unwrap();
         let mut collector = ViewChangeCollector::new();
 
-        let decision = collector.add_timeout(
-            TimeoutVote { validator: vid("a"), height: 1, round: 0 }, &set
-        ).unwrap();
+        let decision = collector
+            .add_timeout(
+                TimeoutVote {
+                    validator: vid("a"),
+                    height: 1,
+                    round: 0,
+                },
+                &set,
+            )
+            .unwrap();
         assert_eq!(decision, ViewChangeDecision::Wait);
     }
 }

@@ -29,7 +29,11 @@ impl State {
     }
 
     pub fn balance_of(&self, address: &Address) -> Coin {
-        self.accounts.balances.get(address).copied().unwrap_or(Coin::ZERO)
+        self.accounts
+            .balances
+            .get(address)
+            .copied()
+            .unwrap_or(Coin::ZERO)
     }
 
     pub fn nonce_of(&self, address: &Address) -> u64 {
@@ -38,7 +42,8 @@ impl State {
 
     /// Credit amount to address. Creates account if it does not exist.
     pub fn credit(&mut self, address: &Address, amount: Coin) -> Result<(), StateError> {
-        let next = self.balance_of(address)
+        let next = self
+            .balance_of(address)
             .checked_add(amount)
             .ok_or(StateError::BalanceOverflow)?;
         self.accounts.balances.insert(address.clone(), next);
@@ -48,8 +53,12 @@ impl State {
     /// Debit amount from address. Fails if balance is insufficient.
     pub fn debit(&mut self, address: &Address, amount: Coin) -> Result<(), StateError> {
         let current = self.balance_of(address);
-        let next = current.checked_sub(amount)
-            .ok_or(StateError::InsufficientFunds { available: current, required: amount })?;
+        let next = current
+            .checked_sub(amount)
+            .ok_or(StateError::InsufficientFunds {
+                available: current,
+                required: amount,
+            })?;
         self.accounts.balances.insert(address.clone(), next);
         Ok(())
     }
@@ -63,10 +72,16 @@ impl State {
     /// Export to string-keyed map for JSON serialisation (compatible with
     /// existing storage.rs snapshot format).
     pub fn to_raw(&self) -> (BTreeMap<String, u64>, BTreeMap<String, u64>) {
-        let balances = self.accounts.balances.iter()
+        let balances = self
+            .accounts
+            .balances
+            .iter()
             .map(|(a, c)| (a.as_str().to_string(), c.micro_ac()))
             .collect();
-        let nonces = self.accounts.nonces.iter()
+        let nonces = self
+            .accounts
+            .nonces
+            .iter()
             .map(|(a, n)| (a.as_str().to_string(), *n))
             .collect();
         (balances, nonces)
@@ -109,21 +124,27 @@ impl std::fmt::Display for StateError {
         match self {
             Self::Address(e) => write!(f, "invalid address: {e}"),
             Self::BalanceOverflow => write!(f, "balance overflow"),
-            Self::InsufficientFunds { available, required } =>
-                write!(f, "insufficient funds: have {available}, need {required}"),
+            Self::InsufficientFunds {
+                available,
+                required,
+            } => write!(f, "insufficient funds: have {available}, need {required}"),
         }
     }
 }
 
 impl From<AddressError> for StateError {
-    fn from(e: AddressError) -> Self { Self::Address(e) }
+    fn from(e: AddressError) -> Self {
+        Self::Address(e)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn addr(s: &str) -> Address { Address::new(s).unwrap() }
+    fn addr(s: &str) -> Address {
+        Address::new(s).unwrap()
+    }
 
     #[test]
     fn credit_and_debit_update_balance() {
@@ -167,7 +188,8 @@ mod tests {
     #[test]
     fn round_trips_through_raw() {
         let mut s = State::new();
-        s.credit(&addr("alice"), Coin::from_ac(500).unwrap()).unwrap();
+        s.credit(&addr("alice"), Coin::from_ac(500).unwrap())
+            .unwrap();
         s.credit(&addr("bob"), Coin::from_ac(250).unwrap()).unwrap();
         s.increment_nonce(&addr("alice"));
         s.increment_nonce(&addr("alice"));
@@ -175,7 +197,10 @@ mod tests {
         let (balances, nonces) = s.to_raw();
         let restored = State::from_raw(balances, nonces).unwrap();
 
-        assert_eq!(restored.balance_of(&addr("alice")), Coin::from_ac(500).unwrap());
+        assert_eq!(
+            restored.balance_of(&addr("alice")),
+            Coin::from_ac(500).unwrap()
+        );
         assert_eq!(restored.nonce_of(&addr("alice")), 2);
         assert_eq!(restored.root(), s.root());
     }

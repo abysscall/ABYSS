@@ -13,10 +13,14 @@ pub struct ValidatorId(String);
 impl ValidatorId {
     pub fn new(value: impl Into<String>) -> Result<Self, ConsensusError> {
         let value = value.into();
-        if value.is_empty() { return Err(ConsensusError::InvalidValidatorId); }
+        if value.is_empty() {
+            return Err(ConsensusError::InvalidValidatorId);
+        }
         Ok(Self(value))
     }
-    pub fn as_str(&self) -> &str { &self.0 }
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
 impl std::fmt::Display for ValidatorId {
@@ -42,19 +46,28 @@ pub struct ValidatorSet {
 
 impl ValidatorSet {
     pub fn new(validators: Vec<Validator>) -> Result<Self, ConsensusError> {
-        if validators.is_empty() { return Err(ConsensusError::EmptyValidatorSet); }
+        if validators.is_empty() {
+            return Err(ConsensusError::EmptyValidatorSet);
+        }
         let mut map = BTreeMap::new();
         let mut total_power = 0_u64;
         for v in &validators {
-            if v.voting_power == 0 { return Err(ConsensusError::ZeroVotingPower); }
+            if v.voting_power == 0 {
+                return Err(ConsensusError::ZeroVotingPower);
+            }
             if map.insert(v.id.clone(), v.voting_power).is_some() {
                 return Err(ConsensusError::DuplicateValidator);
             }
-            total_power = total_power.checked_add(v.voting_power)
+            total_power = total_power
+                .checked_add(v.voting_power)
                 .ok_or(ConsensusError::VotingPowerOverflow)?;
         }
         let ordered_ids = map.keys().cloned().collect();
-        Ok(Self { validators: map, ordered_ids, total_power })
+        Ok(Self {
+            validators: map,
+            ordered_ids,
+            total_power,
+        })
     }
 
     pub fn single_dev_validator(id: ValidatorId) -> Self {
@@ -66,7 +79,9 @@ impl ValidatorSet {
         }
     }
 
-    pub fn total_power(&self) -> u64 { self.total_power }
+    pub fn total_power(&self) -> u64 {
+        self.total_power
+    }
 
     /// Minimum voting power required for a quorum (strictly >2/3).
     pub fn quorum_power(&self) -> u64 {
@@ -81,8 +96,12 @@ impl ValidatorSet {
         self.validators.contains_key(id)
     }
 
-    pub fn len(&self) -> usize { self.validators.len() }
-    pub fn is_empty(&self) -> bool { self.validators.is_empty() }
+    pub fn len(&self) -> usize {
+        self.validators.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.validators.is_empty()
+    }
 
     /// All validator IDs in deterministic (BTreeMap) order.
     pub fn validator_ids(&self) -> &[ValidatorId] {
@@ -111,7 +130,8 @@ impl ValidatorSet {
             if !seen.insert(vote.validator.clone()) {
                 return Err(ConsensusError::DuplicateVote);
             }
-            let power = self.voting_power(&vote.validator)
+            let power = self
+                .voting_power(&vote.validator)
                 .ok_or(ConsensusError::UnknownValidator)?;
 
             match block_hash {
@@ -130,7 +150,8 @@ impl ValidatorSet {
                 _ => {}
             }
 
-            signed_power = signed_power.checked_add(power)
+            signed_power = signed_power
+                .checked_add(power)
                 .ok_or(ConsensusError::VotingPowerOverflow)?;
         }
 
@@ -165,9 +186,12 @@ mod tests {
     #[test]
     fn quorum_with_four_validators() {
         let set = ValidatorSet::new(vec![
-            validator("a", 1), validator("b", 1),
-            validator("c", 1), validator("d", 1),
-        ]).unwrap();
+            validator("a", 1),
+            validator("b", 1),
+            validator("c", 1),
+            validator("d", 1),
+        ])
+        .unwrap();
         assert_eq!(set.quorum_power(), 3);
     }
 
@@ -177,8 +201,13 @@ mod tests {
         let bh = hash(7);
         let mut votes = VoteSet::new();
         for id in ["alice", "bob", "carol"] {
-            votes.push(Vote { validator: vid(id), height: 1, round: 0,
-                block_hash: bh, vote_type: VoteType::PreCommit });
+            votes.push(Vote {
+                validator: vid(id),
+                height: 1,
+                round: 0,
+                block_hash: bh,
+                vote_type: VoteType::PreCommit,
+            });
         }
         let qc = set.certify(votes).unwrap();
         assert_eq!(qc.height, 1);
@@ -190,10 +219,20 @@ mod tests {
     fn rejects_conflicting_block_hashes() {
         let set = ValidatorSet::new(vec![validator("a", 2), validator("b", 2)]).unwrap();
         let mut votes = VoteSet::new();
-        votes.push(Vote { validator: vid("a"), height: 1, round: 0,
-            block_hash: hash(1), vote_type: VoteType::PreVote });
-        votes.push(Vote { validator: vid("b"), height: 1, round: 0,
-            block_hash: hash(2), vote_type: VoteType::PreVote });
+        votes.push(Vote {
+            validator: vid("a"),
+            height: 1,
+            round: 0,
+            block_hash: hash(1),
+            vote_type: VoteType::PreVote,
+        });
+        votes.push(Vote {
+            validator: vid("b"),
+            height: 1,
+            round: 0,
+            block_hash: hash(2),
+            vote_type: VoteType::PreVote,
+        });
         assert_eq!(set.certify(votes), Err(ConsensusError::ConflictingVotes));
     }
 
@@ -202,10 +241,20 @@ mod tests {
         let set = three_validator_set();
         let bh = hash(1);
         let mut votes = VoteSet::new();
-        votes.push(Vote { validator: vid("alice"), height: 1, round: 0,
-            block_hash: bh, vote_type: VoteType::PreVote });
-        votes.push(Vote { validator: vid("alice"), height: 1, round: 0,
-            block_hash: bh, vote_type: VoteType::PreVote });
+        votes.push(Vote {
+            validator: vid("alice"),
+            height: 1,
+            round: 0,
+            block_hash: bh,
+            vote_type: VoteType::PreVote,
+        });
+        votes.push(Vote {
+            validator: vid("alice"),
+            height: 1,
+            round: 0,
+            block_hash: bh,
+            vote_type: VoteType::PreVote,
+        });
         assert_eq!(set.certify(votes), Err(ConsensusError::DuplicateVote));
     }
 
@@ -239,19 +288,28 @@ mod tests {
     fn byzantine_minority_alone_cannot_reach_quorum() {
         // 4 validators; at most 1 may be Byzantine (f < n/3).
         let set = ValidatorSet::new(vec![
-            validator("a", 1), validator("b", 1),
-            validator("c", 1), validator("d", 1),
-        ]).unwrap();
+            validator("a", 1),
+            validator("b", 1),
+            validator("c", 1),
+            validator("d", 1),
+        ])
+        .unwrap();
         let bh = hash(1);
         let mut malicious_votes = VoteSet::new();
         malicious_votes.push(Vote {
-            validator: vid("a"), height: 1, round: 0,
-            block_hash: bh, vote_type: VoteType::PreCommit,
+            validator: vid("a"),
+            height: 1,
+            round: 0,
+            block_hash: bh,
+            vote_type: VoteType::PreCommit,
         });
         let result = set.certify(malicious_votes);
         assert!(matches!(
             result,
-            Err(ConsensusError::InsufficientQuorum { signed_power: 1, .. })
+            Err(ConsensusError::InsufficientQuorum {
+                signed_power: 1,
+                ..
+            })
         ));
     }
 
@@ -259,25 +317,37 @@ mod tests {
     fn two_conflicting_blocks_cannot_both_reach_quorum_with_honest_majority() {
         // 4 validators (3 honest, 1 Byzantine — "carol").
         let set = ValidatorSet::new(vec![
-            validator("alice", 1), validator("bob", 1),
-            validator("carol", 1), validator("dave", 1),
-        ]).unwrap();
+            validator("alice", 1),
+            validator("bob", 1),
+            validator("carol", 1),
+            validator("dave", 1),
+        ])
+        .unwrap();
         let block_a = hash(0xAA);
         let block_b = hash(0xBB);
 
         let mut votes_for_a = VoteSet::new();
         for id in ["alice", "bob", "dave"] {
             votes_for_a.push(Vote {
-                validator: vid(id), height: 1, round: 0,
-                block_hash: block_a, vote_type: VoteType::PreCommit,
+                validator: vid(id),
+                height: 1,
+                round: 0,
+                block_hash: block_a,
+                vote_type: VoteType::PreCommit,
             });
         }
-        assert!(set.certify(votes_for_a).is_ok(), "honest majority must certify block_a");
+        assert!(
+            set.certify(votes_for_a).is_ok(),
+            "honest majority must certify block_a"
+        );
 
         let mut votes_for_b = VoteSet::new();
         votes_for_b.push(Vote {
-            validator: vid("carol"), height: 1, round: 0,
-            block_hash: block_b, vote_type: VoteType::PreCommit,
+            validator: vid("carol"),
+            height: 1,
+            round: 0,
+            block_hash: block_b,
+            vote_type: VoteType::PreCommit,
         });
         assert!(matches!(
             set.certify(votes_for_b),

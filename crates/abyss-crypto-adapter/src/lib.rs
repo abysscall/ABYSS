@@ -7,7 +7,7 @@
 //! - Standard ed25519 signatures (RFC 8032)
 
 use abyss_crypto_api::{Keypair as KeypairTrait, Signer as SignerTrait, Verifier as VerifierTrait};
-use ed25519_dalek::{SigningKey, VerifyingKey, Signature, Signer, Verifier, SecretKey};
+use ed25519_dalek::{SecretKey, Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use rand::rngs::OsRng;
 use rand::RngCore;
 
@@ -35,13 +35,19 @@ impl Ed25519Keypair {
         let secret_key = SecretKey::from(seed);
         let signing_key = SigningKey::from(&secret_key);
         let verifying_key = signing_key.verifying_key();
-        Self { signing_key, verifying_key }
+        Self {
+            signing_key,
+            verifying_key,
+        }
     }
 
     /// Construct from an existing ed25519_dalek::SigningKey
     pub fn from_signing_key(signing_key: SigningKey) -> Self {
         let verifying_key = signing_key.verifying_key();
-        Self { signing_key, verifying_key }
+        Self {
+            signing_key,
+            verifying_key,
+        }
     }
 }
 

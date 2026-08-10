@@ -56,7 +56,9 @@ pub struct SlashingRegistry {
 }
 
 impl SlashingRegistry {
-    pub fn new() -> Self { Self::default() }
+    pub fn new() -> Self {
+        Self::default()
+    }
 
     /// Submit evidence. Returns true if this is new (not a duplicate).
     pub fn submit(&mut self, evidence: SlashingEvidence) -> bool {
@@ -87,8 +89,11 @@ mod tests {
     fn slashing_registry_accepts_new_evidence() {
         let mut reg = SlashingRegistry::new();
         let evidence = SlashingEvidence::DoubleVote {
-            validator: vid("alice"), height: 1, round: 0,
-            hash_a: hash(1), hash_b: hash(2),
+            validator: vid("alice"),
+            height: 1,
+            round: 0,
+            hash_a: hash(1),
+            hash_b: hash(2),
         };
         assert!(reg.submit(evidence));
         assert!(reg.is_slashed(&vid("alice")));
@@ -98,12 +103,18 @@ mod tests {
     fn slashing_registry_deduplicates() {
         let mut reg = SlashingRegistry::new();
         let e1 = SlashingEvidence::DoubleVote {
-            validator: vid("alice"), height: 1, round: 0,
-            hash_a: hash(1), hash_b: hash(2),
+            validator: vid("alice"),
+            height: 1,
+            round: 0,
+            hash_a: hash(1),
+            hash_b: hash(2),
         };
         let e2 = SlashingEvidence::DoubleProposal {
-            validator: vid("alice"), height: 2, round: 0,
-            hash_a: hash(3), hash_b: hash(4),
+            validator: vid("alice"),
+            height: 2,
+            round: 0,
+            hash_a: hash(3),
+            hash_b: hash(4),
         };
         assert!(reg.submit(e1));
         assert!(!reg.submit(e2));
