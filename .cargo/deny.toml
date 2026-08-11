@@ -1,5 +1,12 @@
 # Cargo deny configuration for ABYSS
 # See: https://embarkstudios.github.io/cargo-deny/
+#
+# NOTE (2026-08): cargo-deny's [advisories] and [licenses] config were
+# significantly simplified in PR#611/#681/#753 upstream. Several fields
+# that used to take a lint level ("warn"/"deny"/"allow") were removed
+# entirely because the corresponding checks are now always-deny-by-default,
+# with `ignore`/`allow`/`exceptions` lists as the only way to carve out
+# exemptions. See https://github.com/EmbarkStudios/cargo-deny/blob/main/CHANGELOG.md
 
 [advisories]
 # The advisories table is used to configure the advisories source.
@@ -7,18 +14,13 @@ db-path = "~/.cargo/advisory-db"
 # The url(s) of the advisory databases to use. By default the RustSec advisory
 # database is used. Optionally add additional sources.
 db-urls = ["https://github.com/rustsec/advisory-db/raw/osv/crates/"]
-# How to handle crates with security vulnerabilities
-vulnerability = "deny"
-# How to handle unmaintained crates. Current cargo-deny only accepts
-# "all" | "workspace" | "transitive" | "none" here (older versions used
-# "warn"/"deny", which is no longer valid).
+# NOTE: `vulnerability` and `notice` used to be lint-level fields here but
+# were removed — vulnerability/unsound/notice advisories are now always
+# treated as errors, with `ignore` below as the only exemption mechanism.
+# How to handle unmaintained crates: "all" | "workspace" | "transitive" | "none".
 unmaintained = "all"
 # How to handle crates that have been yanked from crates.io
 yanked = "warn"
-# The confidence level for security vulnerabilities. Only vulnerabilities with
-# a confidence level of or higher are considered when evaluating against the
-# vulnerability field. If a vulnerability is yanked, this does not apply.
-notice = "warn"
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
@@ -26,14 +28,11 @@ ignore = [
 ]
 
 [licenses]
-# The lint level for crates which do not have a detectable license
-unlicensed = "warn"
-# List of explicitly disallowed licenses
-deny = [
-    "GPL-2.0",
-    "GPL-3.0",
-    "AGPL-3.0",
-]
+# NOTE: `unlicensed`, `deny`, `copyleft`, `allow-osi-fsf-free`, and `default`
+# used to be lint-level fields here but were all removed upstream — the
+# check is now always: anything not in `allow` (or `exceptions`) below is
+# denied by default. GPL-2.0/GPL-3.0/AGPL-3.0 don't need an explicit `deny`
+# entry any more; simply not listing them in `allow` already denies them.
 # List of explicitly allowed licenses
 allow = [
     "MIT",
@@ -41,13 +40,8 @@ allow = [
     "BSD-2-Clause",
     "BSD-3-Clause",
 ]
-# Lint level for licenses considered copyleft
-copyleft = "warn"
-# Blanket approval or denial for OSI-approved or FSF Free/Libre licenses
-allow-osi-fsf-free = "both"
-# Lint level used when no other predicates are matched
-default = "deny"
-# The lint level for crate which do not declare any licenses whatsoever
+# The confidence threshold for detecting a license from license text (still
+# a valid field — not removed by the PR#611/#681 cleanup above).
 confidence-threshold = 0.8
 
 [bans]
