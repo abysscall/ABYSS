@@ -9,8 +9,10 @@ db-path = "~/.cargo/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db/raw/osv/crates/"]
 # How to handle crates with security vulnerabilities
 vulnerability = "deny"
-# How to handle unmaintained crates
-unmaintained = "warn"
+# How to handle unmaintained crates. Current cargo-deny only accepts
+# "all" | "workspace" | "transitive" | "none" here (older versions used
+# "warn"/"deny", which is no longer valid).
+unmaintained = "all"
 # How to handle crates that have been yanked from crates.io
 yanked = "warn"
 # The confidence level for security vulnerabilities. Only vulnerabilities with
@@ -36,7 +38,6 @@ deny = [
 allow = [
     "MIT",
     "Apache-2.0",
-    "Apache-2.0 OR MIT",
     "BSD-2-Clause",
     "BSD-3-Clause",
 ]
@@ -52,10 +53,9 @@ confidence-threshold = 0.8
 [bans]
 # Lint level for when multiple versions of the same crate are detected
 multiple-versions = "warn"
-# Lint level for when a crate marked as 'deprecated' is detected
-deprecated = "warn"
-# Lint level for when a crate marked as 'unmaintained' is detected
-unmaintained = "warn"
+# NOTE: `deprecated` and `unmaintained` used to be valid keys here in older
+# cargo-deny versions, but current cargo-deny rejects them as unknown keys
+# for [bans] (that functionality moved to [advisories].unmaintained above).
 # The graph highlighting used when creating dotgraphs
 highlight = "all"
 # List of explicitly allowed duplicate crates
