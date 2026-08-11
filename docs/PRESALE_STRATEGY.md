@@ -1,73 +1,138 @@
 # ABYSS Presale Strategy
 
-This document is a working strategy for attracting investment and running a
-future ABYSS Coin presale. It is not legal, tax, accounting, or investment
-advice. No funds should be accepted until counsel reviews the structure in each
-target jurisdiction.
+This document is the authoritative working strategy for attracting investment
+and running the ABYSS Coin presale. It is not legal, tax, accounting, or
+investment advice. No funds should be accepted until counsel reviews the
+structure in each target jurisdiction.
+
+---
 
 ## Objective
 
 Raise capital for ABYSS development while keeping the project credible,
 auditable, and resilient:
 
-- fund protocol engineering;
-- fund cryptography and security audits;
-- fund wallet, DEX, and private social app development;
-- fund legal/compliance setup;
-- bootstrap liquidity without damaging long-term token economics.
+- fund protocol engineering and cryptography research;
+- fund security audits (zk-SNARK circuits, consensus, smart contracts);
+- fund wallet, DEX, private social app, and AI agent development;
+- fund legal/compliance setup and entity formation;
+- bootstrap ecosystem liquidity without damaging long-term token economics.
+
+---
 
 ## Native Asset
 
 - name: ABYSS Coin
 - symbol: AC
-- max supply: 55,000,000 AC
+- max supply: 55,000,000 AC (hard cap, no inflation)
 - default unit: 1 AC = 100,000,000 micro-AC
+- team reserve: 30,000,000 AC (locked, long vesting)
+- public sale total: 25,000,000 AC
 
-## Proposed Allocation
+---
 
-| Bucket | Share | AC |
-| --- | ---: | ---: |
-| Validator rewards and network security | 25% | 13,750,000 |
-| Ecosystem grants, apps, audits, bug bounties | 20% | 11,000,000 |
-| Public sale and liquidity formation | 20% | 11,000,000 |
-| Foundation treasury with long vesting | 15% | 8,250,000 |
-| Core contributors with long vesting | 10% | 5,500,000 |
-| DEX liquidity reserve | 10% | 5,500,000 |
+## Token Allocation
 
-## Proposed Sale Rounds
+| Bucket                              | AC           |
+| ----------------------------------- | -----------: |
+| Team & founding contributors        | 30,000,000   |
+| Public sale (all rounds combined)   | 25,000,000   |
+| **Total**                           | **55,000,000** |
 
-| Round | AC Cap | Price | Minimum Ticket | Lockup |
-| --- | ---: | ---: | ---: | ---: |
-| Strategic round | 2,000,000 AC | $1.00 | $100,000 | 24 months |
-| Private presale | 3,000,000 AC | $2.00 | $250 | 18 months |
-| Public presale stage I | 4,000,000 AC | $3.00 | $50 | 12 months |
-| Launch liquidity round | 2,000,000 AC | $5.00 | $25 | 6 months |
+Team allocation is subject to a vesting schedule to be published before
+the investor round opens. No team tokens are liquid at sale launch.
 
-Maximum modeled raise: $30,000,000.
+---
 
-These numbers are initial planning values. They should be adjusted after legal,
-market, treasury, and security review.
+## Sale Rounds
 
-## Investment Materials Needed
+All rounds are sequential. A round closes when its token cap is sold out
+or the project formally closes it. Rounds do not overlap.
 
-Before accepting funds:
+| # | Round                        | AC Cap     | Price / AC | Min. Ticket   | Notes                              |
+|---|------------------------------|------------|------------|---------------|------------------------------------|
+| 1 | Sale to Investors            | 2,000,000  | $1.00      | $500,000      | Max 4 slots; accredited investors  |
+| 2 | Pre-Sale                     | 3,000,000  | $2.00      | none          | Open to registered participants    |
+| 3 | Sale Stage 1                 | 5,000,000  | $3.00      | none          | Public                             |
+| — | Investor Secondary Window    | —          | $3.00      | 250,000 AC    | 14-day opt-in; P2P only; ABYSS has no buyback obligation |
+| 4 | Sale Stage 2                 | 5,000,000  | $4.00      | none          | Public                             |
+| 5 | Sale Stage 3                 | 10,000,000 | $5.00      | none          | Public                             |
+| 6 | Final Sale — DEX Order Book  | variable   | market     | none          | Buyback tokens relisted on ABYSS testnet DEX |
 
-- protocol litepaper;
-- full technical whitepaper;
-- tokenomics paper;
-- risk disclosure;
-- lockup and vesting terms;
-- use-of-proceeds document;
-- legal entity and jurisdiction plan;
-- AML/KYC policy where required;
-- investor FAQ;
-- wallet custody warning;
-- security/audit roadmap;
-- treasury multisig policy.
+Maximum modeled raise (if all rounds sell out): ~$93,000,000.
+
+### Investor Secondary Window — details
+
+After Sale Stage 1 closes, a two-phase opt-in window opens for Round 1
+investors only:
+
+- **Phase A (14 days):** investors submit listing intent; minimum lot
+  size is 250,000 AC (50% of a full slot).
+- **Phase B:** listed tokens are matched with new buyers at $3.00/AC
+  via P2P facilitation. ABYSS has **no obligation to purchase** any tokens.
+  This is not a guarantee of exit.
+
+### Final Sale — DEX Order Book
+
+Tokens sourced from the Investor Secondary Window (if any) will be relisted
+as sell orders on the ABYSS DEX in testnet mode. This is the first live
+demonstration of the ABYSS private decentralised exchange. Buyers set orders;
+price discovery is open. Supply is variable depending on secondary window
+participation.
+
+---
+
+## Maximum Raise Breakdown
+
+| Round          | AC       | Price | Max Raise    |
+|----------------|----------|-------|--------------|
+| Investors      | 2,000,000| $1.00 | $2,000,000   |
+| Pre-Sale       | 3,000,000| $2.00 | $6,000,000   |
+| Stage 1        | 5,000,000| $3.00 | $15,000,000  |
+| Stage 2        | 5,000,000| $4.00 | $20,000,000  |
+| Stage 3        |10,000,000| $5.00 | $50,000,000  |
+| **Total**      |**25,000,000**|   | **$93,000,000** |
+
+---
+
+## Investment Materials Needed Before Accepting Funds
+
+- [ ] Protocol litepaper;
+- [ ] Full technical whitepaper;
+- [ ] Tokenomics paper (this doc + data/tokenomics.json);
+- [ ] Risk disclosure (drafted in invest.html);
+- [ ] Lockup and vesting terms (published per round);
+- [ ] Use-of-proceeds document;
+- [ ] Legal entity and jurisdiction plan;
+- [ ] AML/KYC policy where required;
+- [ ] Investor FAQ;
+- [ ] Hardware wallet custody policy for treasury;
+- [ ] Security and audit roadmap;
+- [ ] Treasury multisig policy.
+
+---
+
+## Treasury Wallet Policy
+
+Project funds are held in hardware wallets (Trezor Model T) on dedicated
+seeds used exclusively for ABYSS. Separate addresses are maintained per
+accepted currency:
+
+- USDT (ERC-20) and USDC (ERC-20) and ETH → Ethereum address (Trezor)
+- BTC → Bitcoin address (Trezor)
+
+All treasury addresses are published on the official website and verified
+via official Telegram and Twitter before any round opens. ABYSS will never
+DM investors asking for funds. Investors must independently verify the address
+before every transfer.
+
+Multisig treasury (M-of-N) will be implemented before Stage 2 opens.
+
+---
 
 ## Compliance Guardrails
 
-ABYSS should avoid public language that creates avoidable legal risk:
+ABYSS avoids public language that creates avoidable legal risk:
 
 - do not promise guaranteed returns;
 - do not advertise "risk-free" upside;
@@ -76,68 +141,74 @@ ABYSS should avoid public language that creates avoidable legal risk:
 - do not take funds before terms are final;
 - do not accept sanctioned users or prohibited jurisdictions;
 - do not skip KYC/AML where required;
-- do not sell to U.S. persons without specialized legal advice;
-- do not call the token "utility" unless counsel confirms the structure.
+- do not sell to U.S. persons without specialised legal advice;
+- do not call the token "utility" unless counsel confirms the structure;
+- do not describe the Investor Secondary Window as a guaranteed buyback.
+
+---
 
 ## Investor Readiness Checklist
 
 Minimum readiness before serious investor outreach:
 
-- clean GitHub repository;
-- public roadmap;
-- working devnet demo;
-- clear Netlify website;
-- founder/team presentation;
-- security-first narrative;
-- presale terms draft;
-- legal review booked;
-- treasury wallet design;
-- signed contributor vesting model;
-- investor data room.
+- [x] Clean GitHub repository (https://github.com/abysscall/ABYSS)
+- [x] Public roadmap (docs/ROADMAP.md)
+- [x] Working devnet demo (cargo run -p abyss-node -- devnet)
+- [x] Clear Netlify website
+- [ ] Founder/team presentation
+- [ ] Security-first narrative (litepaper)
+- [ ] Presale terms draft (legal review)
+- [ ] Legal review booked
+- [ ] Treasury hardware wallet setup (Trezor, dedicated seed)
+- [ ] Signed contributor vesting model
+- [ ] Investor data room
+
+---
 
 ## Technical Implementation Plan
 
-Short term:
+### Short term
 
-- keep tokenomics as deterministic Rust code in `abyss-tokenomics`;
-- expose token plan through `abyss-node tokenomics`;
-- keep docs synced with code;
-- add JSON export for tokenomics later;
-- maintain investor whitelist/KYC-ready data model;
-- maintain contribution receipt model;
-- maintain vesting schedule model.
-- expose presale quote simulation through `abyss-node presale quote`.
-
-Example quote:
+- tokenomics kept as deterministic Rust code in `abyss-tokenomics`;
+- `data/tokenomics.json` is the single source of truth for website and CLI;
+- docs stay in sync with `tokenomics.json` and `lib.rs`;
+- investor intent forms processed via Netlify Forms;
+- presale quote simulation via CLI:
 
 ```powershell
-cargo run -p abyss-node -- presale quote --amount=900 --round=public-stage-1 --kyc-approved
+cargo run -p abyss-node -- presale quote --amount=500000 --round=sale-to-investors --kyc-approved
+cargo run -p abyss-node -- presale quote --amount=1000 --round=pre-sale
+cargo run -p abyss-node -- presale quote --amount=500 --round=public-stage-1
 ```
 
-Long term:
+### Long term
 
-- implement sale contract only after legal review;
-- require multisig treasury;
-- require audited smart contracts;
-- publish sale reports;
+- sale contract only after legal review;
+- multisig treasury before Stage 2;
+- audited smart contracts;
+- publish sale reports after each round closes;
 - publish vesting proofs;
-- publish circulating supply reports.
+- publish circulating supply reports;
+- DEX order book live for Final Sale.
+
+---
 
 ## Messaging
 
-Strong positioning:
+### Strong positioning
 
-- privacy-first autonomous blockchain;
-- ABYSS Coin powers private transactions, DEX fees, AI-agent execution, and
-  network security;
+- privacy-first autonomous blockchain — not a fork, built from scratch;
+- ABYSS Coin (AC) powers private transactions, DEX fees, AI agent
+  execution, and network security;
 - zero-knowledge privacy is core protocol design, not an add-on;
-- AI agents are permissioned by wallet policies, not uncontrolled wallet owners;
-- security and audits are explicit budget items.
+- every wallet account has its own AI agent, permissioned by the user;
+- security and audits are explicit budget line items.
 
-Avoid:
+### Avoid
 
 - "guaranteed profit";
 - "next Bitcoin";
 - "risk free";
 - "military-grade" without concrete controls;
-- "fully compliant" before legal sign-off.
+- "fully compliant" before legal sign-off;
+- "guaranteed buyback" in relation to the Investor Secondary Window.
