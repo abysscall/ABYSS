@@ -423,10 +423,10 @@
     <h3>// Payment Wallet</h3>
     <p class="wallet-desc">Send your investment to the address below. Supported networks and currencies:</p>
     <div class="wallet-tabs">
-      <button class="wallet-tab active" onclick="setWallet('usdt')">USDT (ERC-20)</button>
-      <button class="wallet-tab" onclick="setWallet('eth')">ETH</button>
-      <button class="wallet-tab" onclick="setWallet('btc')">BTC</button>
-      <button class="wallet-tab" onclick="setWallet('usdc')">USDC</button>
+      <button class="wallet-tab active" onclick="setWallet('eth',this)">ETH</button>
+      <button class="wallet-tab" onclick="setWallet('btc',this)">BTC</button>
+      <button class="wallet-tab" onclick="setWallet('usdc',this)">USDC</button>
+      <button class="wallet-tab" onclick="setWallet('usdt',this)">USDT (ERC-20)</button>
     </div>
     <div class="wallet-addr-wrap">
       <div class="wallet-addr" id="walletAddr">0xb3Ff46B8bfbD8Df2F0Ae546421C4931Ddf410D51</div>
@@ -539,13 +539,18 @@
     usdc: '0xb3Ff46B8bfbD8Df2F0Ae546421C4931Ddf410D51',
   };
 
-  function setWallet(type) {
+  function setWallet(type, btn) {
     document.querySelectorAll('.wallet-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    if (btn) btn.classList.add('active');
     document.getElementById('walletAddr').textContent = wallets[type];
     document.getElementById('copyBtn').textContent = 'Copy';
     document.getElementById('copyBtn').classList.remove('copied');
   }
+
+  // Show ETH address immediately on page load
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('walletAddr').textContent = wallets['eth'];
+  });
 
   function copyWallet() {
     const addr = document.getElementById('walletAddr').textContent;
