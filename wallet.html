@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ABYSS Wallet — Preview</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root {
-    --void: #020408;
-    --deep: #050c14;
-    --surface: #0a1520;
-    --panel: #0e1e2e;
-    --accent: #00e5ff;
-    --accent2: #7b61ff;
-    --accent3: #00ff9d;
-    --muted: #3a5068;
-    --text: #c8dce8;
-    --dim: #607d8b;
-    --border: rgba(0,229,255,0.12);
-    --border2: rgba(123,97,255,0.18);
-    --border3: rgba(0,255,157,0.15);
+    --void: #0a0712;
+    --deep: #120c1e;
+    --surface: #170f26;
+    --panel: #120c1e;
+    --accent: #7b5cfa;
+    --accent2: #a98cff;
+    --accent3: #7fe0a8;
+    --muted: #5d5878;
+    --text: #cdc8e0;
+    --dim: #8f89ab;
+    --border: rgba(123,92,250,0.16);
+    --border2: rgba(169,140,255,0.22);
+    --border3: rgba(127,224,168,0.18);
     --red: #ff4d6a;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -29,7 +29,7 @@
   body {
     background: var(--void);
     color: var(--text);
-    font-family: 'Space Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
     font-size: 14px;
     line-height: 1.6;
     min-height: 100vh;
@@ -40,8 +40,8 @@
     content: '';
     position: fixed; inset: 0;
     background-image:
-      linear-gradient(rgba(0,229,255,0.018) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,229,255,0.018) 1px, transparent 1px);
+      linear-gradient(rgba(123,92,250,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(123,92,250,0.018) 1px, transparent 1px);
     background-size: 50px 50px;
     pointer-events: none; z-index: 0;
   }
@@ -55,7 +55,7 @@
     border-bottom: 1px solid var(--border);
   }
   .topbar-logo {
-    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 800;
     font-size: 1.1rem; letter-spacing: 0.2em; color: var(--accent);
     text-decoration: none;
   }
@@ -102,18 +102,18 @@
     transition: color 0.15s, background 0.15s, border-color 0.15s;
     text-decoration: none;
   }
-  .nav-item:hover { color: var(--text); background: rgba(0,229,255,0.04); }
-  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,229,255,0.06); }
-  .nav-item.active2 { color: var(--accent2); border-left-color: var(--accent2); background: rgba(123,97,255,0.06); }
+  .nav-item:hover { color: var(--text); background: rgba(123,92,250,0.04); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(123,92,250,0.06); }
+  .nav-item.active2 { color: var(--accent2); border-left-color: var(--accent2); background: rgba(169,140,255,0.06); }
   .nav-icon { width: 14px; text-align: center; flex-shrink: 0; }
   .nav-badge {
     margin-left: auto; font-size: 0.6rem; padding: 0.15rem 0.5rem;
-    background: rgba(0,255,157,0.12); color: var(--accent3);
-    border: 1px solid rgba(0,255,157,0.2);
+    background: rgba(127,224,168,0.12); color: var(--accent3);
+    border: 1px solid rgba(127,224,168,0.2);
   }
   .nav-badge-soon {
     margin-left: auto; font-size: 0.6rem; padding: 0.15rem 0.5rem;
-    background: rgba(123,97,255,0.1); color: var(--accent2);
+    background: rgba(169,140,255,0.1); color: var(--accent2);
     border: 1px solid var(--border2);
   }
 
@@ -127,7 +127,7 @@
   }
   .status-dot {
     width: 7px; height: 7px; border-radius: 50%;
-    background: var(--accent3); box-shadow: 0 0 6px rgba(0,255,157,0.5);
+    background: var(--accent3); box-shadow: 0 0 6px rgba(127,224,168,0.5);
     animation: blink 2s ease infinite;
   }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
@@ -140,7 +140,7 @@
   .preview-banner {
     display: flex; align-items: center; gap: 1rem;
     padding: 0.8rem 1.2rem; border: 1px solid var(--border2);
-    background: rgba(123,97,255,0.06); margin-bottom: 2rem;
+    background: rgba(169,140,255,0.06); margin-bottom: 2rem;
     font-size: 0.78rem; flex-wrap: wrap;
   }
   .preview-banner .tag { color: var(--accent2); font-weight: 700; }
@@ -149,14 +149,14 @@
   /* WALLET CARD */
   .wallet-card {
     border: 1px solid var(--border);
-    background: linear-gradient(135deg, var(--panel) 0%, rgba(0,229,255,0.03) 100%);
+    background: linear-gradient(135deg, var(--panel) 0%, rgba(123,92,250,0.03) 100%);
     padding: 2rem; margin-bottom: 2rem; position: relative; overflow: hidden;
   }
   .wallet-card::before {
     content: 'ABYSS';
     position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
-    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 5rem;
-    color: rgba(0,229,255,0.04); letter-spacing: 0.1em; pointer-events: none;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 5rem;
+    color: rgba(123,92,250,0.04); letter-spacing: 0.1em; pointer-events: none;
     white-space: nowrap;
   }
   .wallet-card-top {
@@ -168,7 +168,7 @@
     text-transform: uppercase; margin-bottom: 0.3rem;
   }
   .wallet-name {
-    font-family: 'Syne', sans-serif; font-size: 1.1rem; color: #fff;
+    font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; color: #fff;
   }
   .wallet-network {
     padding: 0.3rem 0.8rem; font-size: 0.68rem; letter-spacing: 0.1em;
@@ -180,7 +180,7 @@
   .balance-block { margin-bottom: 1.5rem; }
   .balance-label { font-size: 0.68rem; color: var(--dim); letter-spacing: 0.12em; margin-bottom: 0.3rem; }
   .balance-main {
-    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 800;
     font-size: 2.4rem; color: #fff; line-height: 1;
     display: flex; align-items: baseline; gap: 0.5rem;
   }
@@ -195,11 +195,11 @@
     border-right: none; padding: 0.65rem 0.9rem;
     font-size: 0.75rem; color: var(--accent); letter-spacing: 0.05em;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    font-family: 'Space Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
   }
   .addr-copy {
     padding: 0.65rem 1rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-    cursor: pointer; font-family: 'Space Mono', monospace; font-size: 0.7rem;
+    cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem;
     color: var(--dim); letter-spacing: 0.08em; transition: color 0.2s;
     white-space: nowrap;
   }
@@ -212,7 +212,7 @@
     margin-bottom: 1rem;
   }
   .section-title-sm {
-    font-family: 'Syne', sans-serif; font-size: 0.85rem; color: #fff;
+    font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; color: #fff;
   }
   .section-sub { font-size: 0.68rem; color: var(--dim); letter-spacing: 0.1em; }
 
@@ -253,18 +253,18 @@
   .action-btn:hover { background: var(--surface); }
   .action-btn.locked { opacity: 0.45; cursor: not-allowed; }
   .action-icon { font-size: 1.2rem; }
-  .action-label { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--dim); letter-spacing: 0.08em; text-transform: uppercase; }
+  .action-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--dim); letter-spacing: 0.08em; text-transform: uppercase; }
   .action-soon {
     position: absolute; top: 6px; right: 6px;
     font-size: 0.56rem; padding: 0.1rem 0.4rem;
-    background: rgba(123,97,255,0.15); color: var(--accent2);
+    background: rgba(169,140,255,0.15); color: var(--accent2);
     border: 1px solid var(--border2); letter-spacing: 0.05em;
   }
 
   /* AI AGENT */
   .agent-card {
     border: 1px solid var(--border3);
-    background: rgba(0,255,157,0.02);
+    background: rgba(127,224,168,0.02);
     padding: 1.5rem; margin-bottom: 2rem;
     display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
   }
@@ -272,26 +272,26 @@
     width: 52px; height: 52px; border-radius: 50%;
     border: 2px solid var(--border3);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; background: rgba(0,255,157,0.06);
+    font-size: 1.3rem; background: rgba(127,224,168,0.06);
     flex-shrink: 0; position: relative;
   }
   .agent-pulse {
     position: absolute; inset: -4px; border-radius: 50%;
-    border: 1px solid rgba(0,255,157,0.2);
+    border: 1px solid rgba(127,224,168,0.2);
     animation: agentPulse 2s ease infinite;
   }
   @keyframes agentPulse { 0%,100%{transform:scale(1);opacity:0.5} 50%{transform:scale(1.1);opacity:1} }
   .agent-info { flex: 1; }
-  .agent-name { font-family: 'Syne', sans-serif; font-size: 0.95rem; color: #fff; margin-bottom: 0.2rem; }
+  .agent-name { font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; color: #fff; margin-bottom: 0.2rem; }
   .agent-status { font-size: 0.72rem; color: var(--dim); }
   .agent-status span { color: var(--accent3); }
   .agent-btn {
     padding: 0.5rem 1.2rem; border: 1px solid var(--border3);
-    background: transparent; font-family: 'Space Mono', monospace;
+    background: transparent; font-family: 'IBM Plex Mono', monospace;
     font-size: 0.72rem; color: var(--accent3); cursor: pointer;
     letter-spacing: 0.1em; text-transform: uppercase; transition: background 0.2s;
   }
-  .agent-btn:hover { background: rgba(0,255,157,0.08); }
+  .agent-btn:hover { background: rgba(127,224,168,0.08); }
 
   /* TX LIST */
   .tx-list { border: 1px solid var(--border); }
@@ -310,12 +310,12 @@
     display: flex; align-items: center; justify-content: center; font-size: 0.75rem;
     flex-shrink: 0;
   }
-  .tx-icon.in { color: var(--accent3); border-color: var(--border3); background: rgba(0,255,157,0.06); }
+  .tx-icon.in { color: var(--accent3); border-color: var(--border3); background: rgba(127,224,168,0.06); }
   .tx-icon.out { color: var(--red); border-color: rgba(255,77,106,0.2); background: rgba(255,77,106,0.05); }
-  .tx-icon.pending { color: var(--accent); border-color: var(--border); background: rgba(0,229,255,0.05); }
+  .tx-icon.pending { color: var(--accent); border-color: var(--border); background: rgba(123,92,250,0.05); }
   .tx-info { flex: 1; }
   .tx-type { font-size: 0.8rem; color: #fff; }
-  .tx-addr { font-size: 0.68rem; color: var(--dim); font-family: 'Space Mono', monospace; }
+  .tx-addr { font-size: 0.68rem; color: var(--dim); font-family: 'IBM Plex Mono', monospace; }
   .tx-amount { text-align: right; }
   .tx-val { font-size: 0.82rem; color: #fff; }
   .tx-time { font-size: 0.68rem; color: var(--dim); }
@@ -339,10 +339,10 @@
   .modal-close {
     position: absolute; top: 1rem; right: 1rem;
     background: none; border: none; color: var(--dim);
-    font-size: 1rem; cursor: pointer; font-family: 'Space Mono', monospace;
+    font-size: 1rem; cursor: pointer; font-family: 'IBM Plex Mono', monospace;
   }
   .modal-close:hover { color: var(--text); }
-  .modal h3 { font-family: 'Syne', sans-serif; font-size: 1rem; color: #fff; margin-bottom: 1rem; }
+  .modal h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; color: #fff; margin-bottom: 1rem; }
   .qr-wrap {
     background: #fff; padding: 1rem; margin: 0 auto 1rem;
     width: 180px; height: 180px; display: flex; align-items: center; justify-content: center;
@@ -357,10 +357,10 @@
 
   /* COMING SOON PANEL */
   .coming-panel {
-    border: 1px solid var(--border2); background: rgba(123,97,255,0.03);
+    border: 1px solid var(--border2); background: rgba(169,140,255,0.03);
     padding: 3rem 2rem; text-align: center; margin-bottom: 2rem;
   }
-  .coming-panel h3 { font-family: 'Syne', sans-serif; font-size: 1.3rem; color: #fff; margin-bottom: 0.5rem; }
+  .coming-panel h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; color: #fff; margin-bottom: 0.5rem; }
   .coming-panel p { font-size: 0.82rem; color: var(--dim); max-width: 400px; margin: 0 auto; }
 
   /* SETTINGS SIDE */
@@ -372,10 +372,10 @@
   .setting-val { font-size: 0.88rem; color: #fff; }
   .setting-tag {
     display: inline-block; margin-top: 0.4rem; font-size: 0.62rem;
-    padding: 0.15rem 0.5rem; background: rgba(0,255,157,0.1); color: var(--accent3);
+    padding: 0.15rem 0.5rem; background: rgba(127,224,168,0.1); color: var(--accent3);
     border: 1px solid var(--border3);
   }
-  .setting-tag.soon { background: rgba(123,97,255,0.1); color: var(--accent2); border-color: var(--border2); }
+  .setting-tag.soon { background: rgba(169,140,255,0.1); color: var(--accent2); border-color: var(--border2); }
 
   /* VIEWS */
   .view { display: none; }
@@ -397,7 +397,7 @@
 
 <!-- TOP BAR -->
 <div class="topbar">
-  <a href="index.html" class="topbar-logo">ABY<span>SS</span> <span style="font-size:0.65rem; color:var(--dim); letter-spacing:0.15em; font-weight:400;">WALLET</span></a>
+  <a href="index.html" class="topbar-logo" style="display:flex;align-items:center;gap:9px;"><img src="data:image/png;base64,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" alt="" style="height:22px;width:auto;display:block;" /><span>ABY<span style="color:var(--accent2);">SS</span></span><span style="font-size:0.65rem;color:var(--dim);letter-spacing:0.15em;font-weight:400;">WALLET</span></a>
   <div class="topbar-tag">Preview · Mainnet Coming</div>
   <a href="index.html" class="topbar-back">← Main Site</a>
 </div>
@@ -470,7 +470,7 @@
           </div>
         </div>
         <div class="balance-block">
-          <div class="balance-label">Your ABYSS Allocation</div>
+          <div class="balance-label">Your AC Allocation</div>
           <div class="balance-main">
             <span id="balanceAbyss">0</span>
             <span class="balance-sym">ABYSS</span>
@@ -485,51 +485,51 @@
       </div>
 
       <!-- LOCK STATUS BANNER -->
-      <div style="border:1px solid rgba(123,97,255,0.3); background:rgba(123,97,255,0.05); padding:1.2rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:1.2rem; flex-wrap:wrap;">
+      <div style="border:1px solid rgba(169,140,255,0.3); background:rgba(169,140,255,0.05); padding:1.2rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:1.2rem; flex-wrap:wrap;">
         <div style="font-size:1.4rem;">🔒</div>
         <div style="flex:1;">
-          <div style="font-family:'Syne',sans-serif; font-size:0.88rem; color:#fff; margin-bottom:0.2rem;">Tokens locked until ABYSS Mainnet</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:0.88rem; color:#fff; margin-bottom:0.2rem;">Tokens locked until ABYSS Mainnet</div>
           <div style="font-size:0.76rem; color:var(--dim); line-height:1.6;">Your AC tokens are reserved in a Genesis Registry on-chain. <strong style="color:var(--text);">You cannot send, sell, or swap them</strong> until the ABYSS blockchain launches and your allocation is claimed on the native chain. This is by design — ABYSS is the native coin of its own chain.</div>
         </div>
         <div style="text-align:center; min-width:100px;">
           <div style="font-size:0.62rem; color:var(--dim); letter-spacing:0.12em; margin-bottom:0.3rem;">UNLOCK EVENT</div>
-          <div style="font-family:'Syne',sans-serif; font-size:0.9rem; color:var(--accent2);">Mainnet Genesis</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:0.9rem; color:var(--accent2);">Mainnet Genesis</div>
           <div style="font-size:0.68rem; color:var(--dim);">Phase 05</div>
         </div>
       </div>
 
       <!-- INVESTMENT SUMMARY -->
-      <div style="font-family:'Syne',sans-serif; font-size:0.85rem; color:#fff; margin-bottom:0.8rem;">Your Investment Summary</div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:0.85rem; color:#fff; margin-bottom:0.8rem;">Your Investment Summary</div>
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:1.5rem;">
         <div style="background:var(--panel); padding:1.2rem;">
           <div style="font-size:0.62rem; color:var(--dim); letter-spacing:0.12em; margin-bottom:0.3rem;">INVESTED</div>
-          <div style="font-family:'Syne',sans-serif; font-size:1.3rem; color:#fff;" id="investedUSD">$0.00</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:1.3rem; color:#fff;" id="investedUSD">$0.00</div>
           <div style="font-size:0.68rem; color:var(--dim);">USD equivalent</div>
         </div>
         <div style="background:var(--panel); padding:1.2rem;">
           <div style="font-size:0.62rem; color:var(--dim); letter-spacing:0.12em; margin-bottom:0.3rem;">ALLOCATED</div>
-          <div style="font-family:'Syne',sans-serif; font-size:1.3rem; color:var(--accent3);" id="allocatedAbyss">0</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:1.3rem; color:var(--accent3);" id="allocatedAbyss">0</div>
           <div style="font-size:0.68rem; color:var(--dim);">AC (ABYSS Coin)</div>
         </div>
         <div style="background:var(--panel); padding:1.2rem;">
           <div style="font-size:0.62rem; color:var(--dim); letter-spacing:0.12em; margin-bottom:0.3rem;">ICO PRICE</div>
-          <div style="font-family:'Syne',sans-serif; font-size:1.3rem; color:var(--accent);" id="icoPrice">$1.00</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:1.3rem; color:var(--accent);" id="icoPrice">$1.00</div>
           <div style="font-size:0.68rem; color:var(--dim);">per AC</div>
         </div>
         <div style="background:var(--panel); padding:1.2rem;">
           <div style="font-size:0.62rem; color:var(--dim); letter-spacing:0.12em; margin-bottom:0.3rem;">STATUS</div>
-          <div style="font-family:'Syne',sans-serif; font-size:1rem; color:var(--accent2);">Locked</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:1rem; color:var(--accent2);">Locked</div>
           <div style="font-size:0.68rem; color:var(--dim);">until mainnet</div>
         </div>
         <div style="background:var(--panel); padding:1.2rem;">
           <div style="font-size:0.62rem; color:var(--dim); letter-spacing:0.12em; margin-bottom:0.3rem;">STAGE</div>
-          <div style="font-family:'Syne',sans-serif; font-size:1rem; color:#fff;" id="icoStage">—</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:1rem; color:#fff;" id="icoStage">—</div>
           <div style="font-size:0.68rem; color:var(--dim);">sale round</div>
         </div>
       </div>
 
       <!-- ACTIONS — only Receive active, rest locked with reason -->
-      <div style="font-family:'Syne',sans-serif; font-size:0.85rem; color:#fff; margin-bottom:0.8rem;">Actions</div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:0.85rem; color:#fff; margin-bottom:0.8rem;">Actions</div>
       <div class="actions-row" style="margin-bottom:1.5rem;">
         <button class="action-btn" onclick="showView('receive')">
           <span class="action-icon" style="color:var(--accent3);">↓</span>
@@ -553,14 +553,14 @@
       </div>
 
       <!-- TOKEN TABLE — simplified, only ABYSS shown -->
-      <div style="font-family:'Syne',sans-serif; font-size:0.85rem; color:#fff; margin-bottom:0.8rem;">Assets</div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:0.85rem; color:#fff; margin-bottom:0.8rem;">Assets</div>
       <div class="tokens-table" style="margin-bottom:1.5rem;">
         <div class="tokens-head" style="grid-template-columns:2fr 1fr 1fr 1.2fr;">
           <span>Token</span><span>Amount</span><span>Value (ICO)</span><span>Status</span>
         </div>
         <div class="token-row-item" style="grid-template-columns:2fr 1fr 1fr 1.2fr;">
           <div class="token-name-block">
-            <div class="token-dot" style="background:linear-gradient(135deg,#00e5ff,#7b61ff); color:#fff;">A</div>
+            <div class="token-dot" style="background:linear-gradient(135deg,#7b5cfa,#a98cff); color:#fff;">A</div>
             <div>
               <div class="token-name">ABYSS</div>
               <div class="token-ticker">Native coin · Genesis Record</div>
@@ -576,11 +576,11 @@
       </div>
 
       <!-- ENTER INVESTMENT MANUALLY (demo / proof of concept) -->
-      <div style="border:1px solid var(--border3); background:rgba(0,255,157,0.02); padding:1.5rem; margin-bottom:1.5rem;">
-        <div style="font-family:'Syne',sans-serif; font-size:0.88rem; color:#fff; margin-bottom:0.4rem;">Calculate your allocation</div>
-        <div style="font-size:0.76rem; color:var(--dim); margin-bottom:1rem;">Enter your investment amount to see your ABYSS allocation. Actual balances are assigned manually after payment verification.</div>
+      <div style="border:1px solid var(--border3); background:rgba(127,224,168,0.02); padding:1.5rem; margin-bottom:1.5rem;">
+        <div style="font-family:'Space Grotesk',sans-serif; font-size:0.88rem; color:#fff; margin-bottom:0.4rem;">Calculate your allocation</div>
+        <div style="font-size:0.76rem; color:var(--dim); margin-bottom:1rem;">Enter your investment amount to see your AC allocation. Actual balances are assigned manually after payment verification.</div>
         <div style="display:flex; gap:0; align-items:stretch; max-width:400px;">
-          <select id="stageSelect" onchange="recalc()" style="background:var(--void); border:1px solid var(--border); border-right:none; color:var(--text); padding:0.6rem 0.8rem; font-family:'Space Mono',monospace; font-size:0.78rem; outline:none;">
+          <select id="stageSelect" onchange="recalc()" style="background:var(--void); border:1px solid var(--border); border-right:none; color:var(--text); padding:0.6rem 0.8rem; font-family:'IBM Plex Mono',monospace; font-size:0.78rem; outline:none;">
             <option value="1">Stage I — Investors ($1)</option>
             <option value="2">Pre-Sale ($2)</option>
             <option value="3">Sale Stage 1 ($3)</option>
@@ -589,18 +589,18 @@
             <option value="6">Sale Stage 3 ($5)</option>
             <option value="7">Final Sale · DEX ($5)</option>
           </select>
-          <input type="number" id="usdInput" placeholder="USD amount" oninput="recalc()" style="flex:1; background:var(--void); border:1px solid var(--border); border-right:none; color:var(--text); padding:0.6rem 0.8rem; font-family:'Space Mono',monospace; font-size:0.78rem; outline:none;">
-          <div style="background:var(--surface); border:1px solid var(--border); padding:0.6rem 0.8rem; font-size:0.78rem; color:var(--accent3); white-space:nowrap; display:flex; align-items:center;" id="calcResult">— ABYSS</div>
+          <input type="number" id="usdInput" placeholder="USD amount" oninput="recalc()" style="flex:1; background:var(--void); border:1px solid var(--border); border-right:none; color:var(--text); padding:0.6rem 0.8rem; font-family:'IBM Plex Mono',monospace; font-size:0.78rem; outline:none;">
+          <div style="background:var(--surface); border:1px solid var(--border); padding:0.6rem 0.8rem; font-size:0.78rem; color:var(--accent3); white-space:nowrap; display:flex; align-items:center;" id="calcResult">— AC</div>
         </div>
       </div>
 
       <!-- WHAT HAPPENS AT MAINNET -->
       <div style="border:1px solid var(--border); background:var(--panel); padding:1.5rem;">
-        <div style="font-family:'Syne',sans-serif; font-size:0.88rem; color:#fff; margin-bottom:1rem;">// What happens at ABYSS Mainnet launch?</div>
+        <div style="font-family:'Space Grotesk',sans-serif; font-size:0.88rem; color:#fff; margin-bottom:1rem;">// What happens at ABYSS Mainnet launch?</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
           <div style="display:flex; gap:0.8rem;">
             <span style="color:var(--accent3); font-size:1rem; flex-shrink:0;">01</span>
-            <div><div style="font-size:0.8rem; color:#fff; margin-bottom:0.2rem;">Genesis Distribution</div><div style="font-size:0.74rem; color:var(--dim);">Your ABYSS allocation is claimed and transferred to your wallet on the native chain.</div></div>
+            <div><div style="font-size:0.8rem; color:#fff; margin-bottom:0.2rem;">Genesis Distribution</div><div style="font-size:0.74rem; color:var(--dim);">Your AC allocation is claimed and transferred to your wallet on the native chain.</div></div>
           </div>
           <div style="display:flex; gap:0.8rem;">
             <span style="color:var(--accent3); font-size:1rem; flex-shrink:0;">02</span>
@@ -621,7 +621,7 @@
 
     <!-- ── VIEW: RECEIVE ── -->
     <div class="view" id="view-receive">
-      <h2 style="font-family:'Syne',sans-serif; font-size:1.3rem; color:#fff; margin-bottom:0.4rem;">Receive Funds</h2>
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-size:1.3rem; color:#fff; margin-bottom:0.4rem;">Receive Funds</h2>
       <p style="font-size:0.82rem; color:var(--dim); margin-bottom:2rem;">Share your ABYSS wallet address or QR code. Currently accepting ETH, USDT, USDC and BTC (BTC address separate).</p>
 
       <div style="display:grid; grid-template-columns:auto 1fr; gap:2rem; align-items:start; flex-wrap:wrap;">
@@ -630,8 +630,8 @@
         </div>
         <div>
           <div style="font-size:0.68rem; color:var(--dim); letter-spacing:0.12em; margin-bottom:0.4rem;">YOUR ABYSS WALLET ADDRESS (ETH)</div>
-          <div style="font-family:'Space Mono',monospace; font-size:0.82rem; color:var(--accent); word-break:break-all; padding:0.8rem 1rem; border:1px solid var(--border); background:var(--void); margin-bottom:0.8rem;" id="receiveAddr">Loading…</div>
-          <button onclick="copyAddress()" style="padding:0.6rem 1.4rem; border:1px solid var(--accent); background:transparent; color:var(--accent); font-family:'Space Mono',monospace; font-size:0.75rem; cursor:pointer; letter-spacing:0.1em; text-transform:uppercase; transition:background 0.2s;" onmouseover="this.style.background='rgba(0,229,255,0.08)'" onmouseout="this.style.background='transparent'">Copy Address</button>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:0.82rem; color:var(--accent); word-break:break-all; padding:0.8rem 1rem; border:1px solid var(--border); background:var(--void); margin-bottom:0.8rem;" id="receiveAddr">Loading…</div>
+          <button onclick="copyAddress()" style="padding:0.6rem 1.4rem; border:1px solid var(--accent); background:transparent; color:var(--accent); font-family:'IBM Plex Mono',monospace; font-size:0.75rem; cursor:pointer; letter-spacing:0.1em; text-transform:uppercase; transition:background 0.2s;" onmouseover="this.style.background='rgba(123,92,250,0.1)'" onmouseout="this.style.background='transparent'">Copy Address</button>
 
           <div style="margin-top:1.5rem; padding:1rem; border:1px solid rgba(255,190,0,0.15); background:rgba(255,190,0,0.03); font-size:0.78rem; color:#c8a44a; line-height:1.7;">
             <strong style="color:#e8c060;">⚠ Send only to this address:</strong> ETH, USDT (ERC-20), USDC (ERC-20). For BTC investments, contact via official Telegram for a separate BTC address.
@@ -640,9 +640,9 @@
       </div>
 
       <div style="margin-top:2rem; border:1px solid var(--border); background:var(--panel); padding:1.5rem;">
-        <div style="font-family:'Syne',sans-serif; font-size:0.9rem; color:#fff; margin-bottom:1rem;">Investment Reference</div>
+        <div style="font-family:'Space Grotesk',sans-serif; font-size:0.9rem; color:#fff; margin-bottom:1rem;">Investment Reference</div>
         <p style="font-size:0.8rem; color:var(--dim); margin-bottom:1rem;">Going to invest in Stage I (Sale to Investors)? Complete the intent form first to receive your reference code, then transfer funds.</p>
-        <a href="invest.html" style="display:inline-block; padding:0.7rem 1.4rem; border:1px solid var(--accent); color:var(--accent); font-family:'Space Mono',monospace; font-size:0.75rem; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none;">Go to Investor Form →</a>
+        <a href="invest.html" style="display:inline-block; padding:0.7rem 1.4rem; border:1px solid var(--accent); color:var(--accent); font-family:'IBM Plex Mono',monospace; font-size:0.75rem; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none;">Go to Investor Form →</a>
       </div>
     </div>
 
@@ -656,7 +656,7 @@
 
     <!-- ── VIEW: HISTORY ── -->
     <div class="view" id="view-history">
-      <h2 style="font-family:'Syne',sans-serif; font-size:1.3rem; color:#fff; margin-bottom:1.5rem;">Transaction History</h2>
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-size:1.3rem; color:#fff; margin-bottom:1.5rem;">Transaction History</h2>
       <div class="tx-list">
         <div class="tx-head"><span>Activity</span><span>Amount</span></div>
         <div class="tx-empty">Your transactions will appear here once the wallet receives funds.</div>
@@ -665,11 +665,11 @@
 
     <!-- ── VIEW: AI AGENT ── -->
     <div class="view" id="view-agent">
-      <h2 style="font-family:'Syne',sans-serif; font-size:1.3rem; color:#fff; margin-bottom:0.4rem;">AI Agent</h2>
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-size:1.3rem; color:#fff; margin-bottom:0.4rem;">AI Agent</h2>
       <p style="font-size:0.82rem; color:var(--dim); margin-bottom:2rem;">Every ABYSS user receives a personal AI Agent at mainnet launch. The full specification is in development.</p>
-      <div style="border:1px solid var(--border3); background:rgba(0,255,157,0.02); padding:2.5rem; text-align:center;">
+      <div style="border:1px solid var(--border3); background:rgba(127,224,168,0.02); padding:2.5rem; text-align:center;">
         <div style="font-size:2.5rem; margin-bottom:1rem; opacity:0.6;">◈</div>
-        <div style="font-family:'Syne',sans-serif; font-size:1.1rem; color:#fff; margin-bottom:0.5rem;">Your Agent is waiting.</div>
+        <div style="font-family:'Space Grotesk',sans-serif; font-size:1.1rem; color:#fff; margin-bottom:0.5rem;">Your Agent is waiting.</div>
         <p style="font-size:0.8rem; color:var(--dim); max-width:380px; margin:0 auto 1.5rem;">Agent capabilities, on-chain permissions, and the Agent economy will be revealed as mainnet development progresses. Founding token holders get first-priority agent selection.</p>
         <div style="display:inline-block; padding:0.5rem 1.2rem; border:1px solid var(--border3); font-size:0.72rem; color:var(--accent3); letter-spacing:0.12em;">SPEC COMING · PHASE 05</div>
       </div>
@@ -693,7 +693,7 @@
 
     <!-- ── VIEW: SETTINGS ── -->
     <div class="view" id="view-settings">
-      <h2 style="font-family:'Syne',sans-serif; font-size:1.3rem; color:#fff; margin-bottom:1.5rem;">Wallet Settings</h2>
+      <h2 style="font-family:'Space Grotesk',sans-serif; font-size:1.3rem; color:#fff; margin-bottom:1.5rem;">Wallet Settings</h2>
       <div class="settings-grid">
         <div class="setting-item">
           <div class="setting-label">Wallet Type</div>
@@ -781,7 +781,7 @@ function recalc() {
   const usd   = parseFloat(document.getElementById('usdInput').value) || 0;
   const price = stagePrices[stage];
   const abyss = usd > 0 ? Math.floor(usd / price).toLocaleString() : '—';
-  document.getElementById('calcResult').textContent = abyss + ' ABYSS';
+  document.getElementById('calcResult').textContent = abyss + ' AC';
 
   // Update summary cards for demo feel
   if (usd > 0) {
