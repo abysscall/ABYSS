@@ -160,8 +160,8 @@ Every Native AI operates inside a sandbox with the following guarantees:
 All project treasury funds are held in Trezor Model T hardware wallets
 on dedicated seeds used exclusively for ABYSS. Treasury addresses are:
 
-- ETH / USDT (ERC-20) / USDC: `0xb3Ff46B8bfbD8Df2F0Ae546421C4931Ddf410D51`
-- BTC: `bc1q2zuppk5ud8u97l80z3neh89dtpga42kccq0pv5`
+- ETH / USDT (ERC-20) / USDC: `_Withheld pending legal review (EU/MiCA). Will be published once compliance review is complete._`
+- BTC: `_Withheld pending legal review (EU/MiCA). Will be published once compliance review is complete._`
 
 Before Sale Stage 2 opens, treasury moves to multisig (M-of-N threshold).
 

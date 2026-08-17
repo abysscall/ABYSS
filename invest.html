@@ -313,7 +313,7 @@
 
   <!-- STAGE HEADER -->
   <div class="stage-header">
-    <div class="stage-badge">● Stage I — Active</div>
+    <div class="stage-badge" style="background:rgba(255,190,0,0.08);color:#e8c060;border-color:rgba(255,190,0,0.2);animation:none;">⏸ Stage I — Temporarily Paused</div>
     <div class="stage-phase">// Sale to Investors · Phase 01 of 06</div>
   </div>
 
@@ -398,7 +398,7 @@
         <div class="step-num">02</div>
         <div class="step-content">
           <h4>Transfer funds to the ABYSS wallet</h4>
-          <p>Send exactly $500,000 in USDT, USDC, ETH, or BTC to the wallet address shown below. Include your submission ID in the transaction memo if supported.</p>
+          <p>Send exactly $500,000 in USDT, USDC, ETH, or BTC to the official wallet address, published once legal review is complete. Include your submission ID in the transaction memo if supported.</p>
         </div>
       </div>
       <div class="step-item">
@@ -421,19 +421,8 @@
   <!-- WALLET BLOCK -->
   <div class="wallet-block">
     <h3>// Payment Wallet</h3>
-    <p class="wallet-desc">Send your investment to the address below. Supported networks and currencies:</p>
-    <div class="wallet-tabs">
-      <button class="wallet-tab active" onclick="setWallet('eth',this)">ETH</button>
-      <button class="wallet-tab" onclick="setWallet('btc',this)">BTC</button>
-      <button class="wallet-tab" onclick="setWallet('usdc',this)">USDC</button>
-      <button class="wallet-tab" onclick="setWallet('usdt',this)">USDT (ERC-20)</button>
-    </div>
-    <div class="wallet-addr-wrap">
-      <div class="wallet-addr" id="walletAddr">0xb3Ff46B8bfbD8Df2F0Ae546421C4931Ddf410D51</div>
-      <button class="copy-btn" id="copyBtn" onclick="copyWallet()">Copy</button>
-    </div>
     <div class="wallet-note">
-      <strong>⚠ Important:</strong> Always verify this address via our official Telegram or Twitter before sending. ABYSS will never DM you asking for funds. Double-check the address on every transfer. We are not responsible for funds sent to incorrect addresses.
+      <strong>⏸ Payment details temporarily withheld.</strong> ABYSS is completing legal and regulatory review (EU / MiCA) before accepting further funds. Wallet addresses will be republished here once this review is complete. Follow our official Telegram channel for updates — ABYSS will never DM you first with payment instructions.
     </div>
     <div class="currencies">
       <div class="currency">USDT ERC-20</div>
@@ -532,37 +521,6 @@
 <script src="presale-quote.js"></script>
 <script>
   // Wallet addresses per currency
-  const wallets = {
-    usdt: '0xb3Ff46B8bfbD8Df2F0Ae546421C4931Ddf410D51',
-    eth:  '0xb3Ff46B8bfbD8Df2F0Ae546421C4931Ddf410D51',
-    btc:  'bc1q2zuppk5ud8u97l80z3neh89dtpga42kccq0pv5',
-    usdc: '0xb3Ff46B8bfbD8Df2F0Ae546421C4931Ddf410D51',
-  };
-
-  function setWallet(type, btn) {
-    document.querySelectorAll('.wallet-tab').forEach(t => t.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-    document.getElementById('walletAddr').textContent = wallets[type];
-    document.getElementById('copyBtn').textContent = 'Copy';
-    document.getElementById('copyBtn').classList.remove('copied');
-  }
-
-  // Show ETH address immediately on page load
-  document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('walletAddr').textContent = wallets['eth'];
-  });
-
-  function copyWallet() {
-    const addr = document.getElementById('walletAddr').textContent;
-    if (addr.includes('coming soon')) return;
-    navigator.clipboard.writeText(addr).then(() => {
-      const btn = document.getElementById('copyBtn');
-      btn.textContent = 'Copied ✓';
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
-    });
-  }
-
   // Slot state — change slotsTaken to simulate
   const slotsTaken = 0; // 0–4; set to 4 to close
   const slotsTotal = 4;
