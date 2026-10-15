@@ -6,8 +6,9 @@ use abyss_social::{
     AgentActivityWindow, AgentSocialAction, AgentSocialPolicy, DevFeed, Visibility,
 };
 use abyss_tokenomics::{
-    parse_usd_to_cents, usd_cents_to_string, ContributionReceipt, DexFinalSale, InvestorProfile,
-    InvestorSecondaryWindow, KycStatus, SecondaryListing, TeamVesting, TokenomicsPlan,
+    parse_usd_to_cents, usd_cents_to_string, AcEconomyWorkingDraft, ContributionReceipt,
+    DexFinalSale, InvestorProfile, InvestorSecondaryWindow, KycStatus, SecondaryListing,
+    TeamReleaseRule, TeamVesting, TokenomicsPlan,
 };
 use abyss_wallet::WalletAccount;
 
@@ -350,6 +351,9 @@ fn quote_dex_final_sale(args: Vec<String>) -> Result<(), String> {
 
 fn print_tokenomics(args: Vec<String>) -> Result<(), String> {
     let json = args.iter().any(|a| a == "--json");
+    if args.iter().any(|a| a == "--working-draft") {
+        return print_ac_economy_working_draft(json);
+    }
     let plan = TokenomicsPlan::abyss_default();
     plan.validate()
         .map_err(|err| format!("invalid tokenomics plan: {err:?}"))?;
@@ -438,6 +442,138 @@ fn print_tokenomics(args: Vec<String>) -> Result<(), String> {
         println!();
         println!("maximum_sale_raise: {} (standard rounds only; excludes secondary window and variable dex sale)",
             usd_cents_to_string(total));
+    }
+    Ok(())
+}
+
+/// Prints the proposed AC Economy direction without changing the active AC v0
+/// plan used by the devnet, public-sale pages, or existing CLI integrations.
+fn print_ac_economy_working_draft(json: bool) -> Result<(), String> {
+    let draft = AcEconomyWorkingDraft::current();
+    draft
+        .validate()
+        .map_err(|err| format!("invalid AC Economy working draft: {err:?}"))?;
+
+    if json {
+        let allocations_json: Vec<String> = draft
+            .allocations
+            .iter()
+            .map(|allocation| {
+                format!(
+                    "    {{ \"name\": \"{}\", \"amount_ac\": \"{}\" }}",
+                    json_escape(allocation.name),
+                    allocation.amount
+                )
+            })
+            .collect();
+        let stages_json: Vec<String> = draft
+            .sponsorship_stages
+            .iter()
+            .map(|stage| {
+                format!(
+                    "    {{ \"id\": \"{}\", \"name\": \"{}\", \"reward_pool_ac\": \"{}\", \"usd_per_ac_cents\": {} }}",
+                    stage.id,
+                    json_escape(stage.name),
+                    stage.reward_pool,
+                    stage.usd_per_ac_cents
+                )
+            })
+            .collect();
+        let release_periods_json: Vec<String> = draft
+            .team_release_policy
+            .periods
+            .iter()
+            .map(|period| {
+                let last_year = period
+                    .last_year
+                    .map(|year| year.to_string())
+                    .unwrap_or_else(|| "null".to_owned());
+                let rule = match period.rule {
+                    TeamReleaseRule::Locked => "locked".to_owned(),
+                    TeamReleaseRule::CurrentBalanceCap {
+                        maximum_release_bps,
+                    } => format!("current-balance-cap-{}-bps", maximum_release_bps),
+                    TeamReleaseRule::PendingDecision => "pending-decision".to_owned(),
+                };
+                format!(
+                    "    {{ \"first_year\": {}, \"last_year\": {}, \"rule\": \"{}\" }}",
+                    period.first_year, last_year, rule
+                )
+            })
+            .collect();
+        let maximum_contribution = draft
+            .maximum_sponsorship_contribution_usd_cents()
+            .ok_or_else(|| {
+                "working draft sponsorship contribution calculation overflowed".to_owned()
+            })?;
+
+        println!(
+            "{{\n  \"id\": \"{}\",\n  \"status\": \"working-draft\",\n  \"active\": false,\n  \"max_supply_ac\": \"{}\",\n  \"allocations\": [\n{}\n  ],\n  \"sponsorship_stages\": [\n{}\n  ],\n  \"maximum_sponsorship_contribution_usd_cents\": {},\n  \"team_release_policy\": {{\n    \"uses_current_team_balance\": {},\n    \"unused_capacity_carries_forward\": {},\n    \"periods\": [\n{}\n    ]\n  }}\n}}",
+            draft.id,
+            draft.max_supply,
+            allocations_json.join(",\n"),
+            stages_json.join(",\n"),
+            maximum_contribution,
+            draft.team_release_policy.uses_current_team_balance,
+            draft.team_release_policy.unused_capacity_carries_forward,
+            release_periods_json.join(",\n"),
+        );
+        return Ok(());
+    }
+
+    println!("ABYSS AC Economy working draft — NON-BINDING");
+    println!("id: {}", draft.id);
+    println!("status: proposed; not active for sale, issuance, claims, or genesis");
+    println!("max_supply: {}", draft.max_supply);
+    println!();
+    println!("allocations:");
+    for allocation in &draft.allocations {
+        println!("  - {}: {}", allocation.name, allocation.amount);
+    }
+    println!();
+    println!("sponsorship_stages:");
+    for stage in &draft.sponsorship_stages {
+        println!(
+            "  - {} [{}]: pool {}, ratio {} / AC",
+            stage.name,
+            stage.id,
+            stage.reward_pool,
+            usd_cents_to_string(stage.usd_per_ac_cents)
+        );
+    }
+    println!(
+        "implied_maximum_sponsorship_contribution: {}",
+        usd_cents_to_string(
+            draft
+                .maximum_sponsorship_contribution_usd_cents()
+                .ok_or_else(
+                    || "working draft sponsorship contribution calculation overflowed".to_owned()
+                )?
+        )
+    );
+    println!();
+    println!("team_release_policy:");
+    println!(
+        "  - basis: current team balance | unused capacity carries forward: {}",
+        draft.team_release_policy.unused_capacity_carries_forward
+    );
+    for period in &draft.team_release_policy.periods {
+        let years = match period.last_year {
+            Some(last) if last == period.first_year => format!("year {}", period.first_year),
+            Some(last) => format!("years {}-{}", period.first_year, last),
+            None => format!("year {}+", period.first_year),
+        };
+        let rule = match period.rule {
+            TeamReleaseRule::Locked => "locked".to_owned(),
+            TeamReleaseRule::CurrentBalanceCap {
+                maximum_release_bps,
+            } => format!(
+                "maximum {}% of current balance",
+                maximum_release_bps as f64 / 100.0
+            ),
+            TeamReleaseRule::PendingDecision => "pending decision; no default release".to_owned(),
+        };
+        println!("  - {years}: {rule}");
     }
     Ok(())
 }
@@ -718,7 +854,7 @@ fn print_help() {
     println!("  abyss-node presale quote --amount=<usd> [--round=<id>] [--kyc-approved] [--professional] [--json]");
     println!("  abyss-node presale secondary-window [--info] [--tokens=<ac>] [--json]");
     println!("  abyss-node presale dex-quote --amount=<usd> [--json]");
-    println!("  abyss-node tokenomics [--json]");
+    println!("  abyss-node tokenomics [--json] [--working-draft]");
     println!("  abyss-node vesting [--json]");
     println!("  abyss-node social demo");
     println!("  abyss-node social post --author=<address> --body=<text> [--shielded]");

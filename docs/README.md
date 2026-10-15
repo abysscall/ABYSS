@@ -23,7 +23,14 @@ docs/
 │   ├── ADR-0008.md       — Hybrid PoS + BFT consensus
 │   ├── ADR-0009.md       — Hybrid VM (EVM-compatible + ZK circuit)
 │   ├── ADR-0010.md       — Investor Secondary Window (P2P, no obligation)
-│   └── ADR-0011.md       — AI Agent policy as first-class protocol object
+│   ├── ADR-0011.md       — AI Agent policy as first-class protocol object
+│   ├── ...                — ADR-0012 through ADR-0025
+│   └── ADR-0026.md       — Governance, Root Identity, and Scoped Capabilities
+│
+├── architecture/         — Core specifications and architecture registers
+│   ├── ABYSS_CORE_TECHNICAL_SPEC.md
+│   ├── ABYSS_GOVERNANCE_IDENTITY_CAPABILITY_DECISION_RECORD.md
+│   └── ABYSS_ARCHITECTURE_PARAMETER_REGISTER.md
 │
 ├── consensus/            — Consensus layer deep-dives
 ├── crypto/               — Cryptographic primitives and ZK design

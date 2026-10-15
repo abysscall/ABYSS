@@ -1,8 +1,14 @@
-# ABYSS Tokenomics — Technical Reference
+# ABYSS Tokenomics — AC v0 Technical Reference
 
-See ADR-0012 for the decision rationale.
-This document is the authoritative reference for all token economics parameters.
-The source of truth in code is `crates/abyss-tokenomics/src/lib.rs`.
+**Status:** active devnet model only.
+
+See ADR-0012 for the accepted AC v0 decision rationale. This document describes
+the parameters emitted by `TokenomicsPlan::abyss_default()` and consumed by the
+current devnet/public-sale tooling; it is not a final economic specification.
+
+The proposed successor is kept separately in
+`docs/tokenomics/AC_ECONOMY_WORKING_DRAFT.md`. It is non-binding until ADR-0027
+is accepted and a versioned genesis/configuration migration is approved.
 
 ---
 

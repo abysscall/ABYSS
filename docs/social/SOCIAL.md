@@ -8,9 +8,12 @@ Production storage and P2P replication: Phase 6 on the roadmap.
 
 ## Core Design Principles
 
-**Identity reuses the wallet address.**
-There is no separate social account to register, link, or have breached.
-Your ABYSS wallet address is your social identity.
+**Production identity uses PersonaID, not a wallet address.**
+Per ADR-0026, Root ABYSS ID, PersonaID, wallet account, payment address, and
+key are separate concepts. Social content is authored through a PersonaID and
+a purpose-specific signing key; a payment address must not become a universal
+social identifier. The current devnet model still accepts a string author and
+is a temporary implementation stand-in, not the production identity contract.
 
 **Content lives on content-addressed, replicated storage.**
 No single company server. No single point of censorship.
@@ -32,7 +35,7 @@ Rules are public. Enforcement is verifiable. No opaque shadow-banning.
 ```rust
 pub struct Post {
     pub id: PostId,
-    pub author: String,          // ABYSS wallet address
+    pub author: String,          // devnet placeholder; production: PersonaID
     pub body: String,            // max 2,000 bytes
     pub visibility: Visibility,  // Attributed | Shielded
     pub created_at_ms: u64,
@@ -97,7 +100,7 @@ cargo run -p abyss-node -- social post --author=abyss1myaddress --body="Anonymou
 | Aspect | Current (devnet) | Phase 6 (production) |
 |---|---|---|
 | Storage | In-memory DevFeed | Content-addressed, replicated |
-| Identity | Any string | ABYSS wallet address with signature |
-| Authorship proof | Trust | Cryptographic signature |
+| Identity | Any string | PersonaID with purpose-specific signature |
+| Authorship proof | Trust | Cryptographic signature bound to PersonaID |
 | Moderation | None | On-chain governance |
 | Monetisation | None | AC tips and creator economy via DEX |

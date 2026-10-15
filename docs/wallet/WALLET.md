@@ -37,6 +37,25 @@ When `create_agent_payment()` is called:
 
 ---
 
+## Transfer-protection working draft
+
+`TransferProtectionPolicy` gives Wallet, ABYSS OS, and any AI runtime one
+deterministic local policy vocabulary: `Trusted`, `Unknown`, and `Suspicious`
+recipients map to normal checks, explicit confirmation, or a proposed
+pre-settlement protected hold. The provided `working_draft()` policy uses a
+five-minute auto-cancelling hold for suspicious recipients.
+
+It is a **Wallet-side evaluation model**, not an on-chain escrow. The current
+ABYSS `Transaction` cannot be cancelled after final settlement. A protected
+hold becomes executable only after Core defines a versioned transfer action and
+deterministic settlement rules. AI systems may supply an assessment or propose
+an action, but cannot bypass this account-owned policy or finalize a transfer.
+
+See `docs/tokenomics/AC_ECONOMY_WORKING_DRAFT.md` and ADR-0027 for the
+cross-product contract and open parameters.
+
+---
+
 ## Devnet Demonstration
 
 ```bash

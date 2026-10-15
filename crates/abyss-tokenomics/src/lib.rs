@@ -8,6 +8,234 @@ use abyss_core::{Coin, COIN};
 
 pub const BASIS_POINTS: u16 = 10_000;
 
+/// Identifier for the non-binding AC Economy working draft.
+///
+/// This deliberately does not replace `TokenomicsPlan::abyss_default()`.  The
+/// latter remains the AC v0 devnet plan until an accepted ADR and genesis
+/// configuration select a successor.
+pub const AC_ECONOMY_WORKING_DRAFT_ID: &str = "ac-economy-working-draft-2026-09";
+
+// ── AC Economy working draft ─────────────────────────────────────────────────
+//
+// This model records the current economic discussion without making it the
+// active sale, issuance, or genesis configuration. It intentionally omits
+// unsettled concepts such as reward eligibility, vesting mechanics, Year 7+
+// team releases, circulating-supply rules, and wallet-tier evaluation.
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AcEconomyWorkingDraft {
+    pub id: &'static str,
+    pub max_supply: Coin,
+    pub allocations: Vec<DraftAllocation>,
+    pub sponsorship_stages: Vec<SponsorshipStage>,
+    pub team_release_policy: TeamReleasePolicy,
+}
+
+impl AcEconomyWorkingDraft {
+    /// The working draft captured in ADR-0027.
+    ///
+    /// It is a planning artifact only. Production code must not use it to
+    /// authorize transfers, accept a contribution, calculate a claim, or
+    /// establish a wallet/validator entitlement.
+    pub fn current() -> Self {
+        Self {
+            id: AC_ECONOMY_WORKING_DRAFT_ID,
+            max_supply: Coin::MAX,
+            allocations: vec![
+                DraftAllocation::new("Sponsorship Rewards", 25_000_000),
+                DraftAllocation::new("Team / Core Development", 15_000_000),
+                DraftAllocation::new("Ecosystem / Protocol Reserve", 15_000_000),
+            ],
+            sponsorship_stages: vec![
+                SponsorshipStage::new("stage-1", "Stage 1", 1_000_000, 100),
+                SponsorshipStage::new("stage-2", "Stage 2", 10_000_000, 200),
+                SponsorshipStage::new("stage-3", "Stage 3", 5_000_000, 300),
+                SponsorshipStage::new("stage-4", "Stage 4", 5_000_000, 400),
+                SponsorshipStage::new("stage-5", "Stage 5", 4_000_000, 500),
+            ],
+            team_release_policy: TeamReleasePolicy::current_draft(),
+        }
+    }
+
+    pub fn allocation_amount(&self, name: &str) -> Option<Coin> {
+        self.allocations
+            .iter()
+            .find(|allocation| allocation.name == name)
+            .map(|allocation| allocation.amount)
+    }
+
+    /// Maximum contribution implied by the current five sponsorship stages.
+    /// This is planning math only, not a fundraising target or an offer term.
+    pub fn maximum_sponsorship_contribution_usd_cents(&self) -> Option<u64> {
+        self.sponsorship_stages
+            .iter()
+            .try_fold(0_u64, |total, stage| {
+                let ac = stage.reward_pool.micro_ac() / COIN;
+                ac.checked_mul(stage.usd_per_ac_cents)
+                    .and_then(|amount| total.checked_add(amount))
+            })
+    }
+
+    pub fn validate(&self) -> Result<(), TokenomicsError> {
+        let allocation_total = self
+            .allocations
+            .iter()
+            .try_fold(Coin::ZERO, |total, allocation| {
+                total.checked_add(allocation.amount)
+            })
+            .ok_or(TokenomicsError::SupplyOverflow)?;
+        if allocation_total != self.max_supply {
+            return Err(TokenomicsError::DraftAllocationsMustEqualMaxSupply {
+                actual: allocation_total,
+                max_supply: self.max_supply,
+            });
+        }
+
+        let sponsorship_allocation = self
+            .allocation_amount("Sponsorship Rewards")
+            .ok_or(TokenomicsError::MissingSponsorshipAllocation)?;
+        let stage_total = self
+            .sponsorship_stages
+            .iter()
+            .try_fold(Coin::ZERO, |total, stage| {
+                total.checked_add(stage.reward_pool)
+            })
+            .ok_or(TokenomicsError::SupplyOverflow)?;
+        if stage_total != sponsorship_allocation {
+            return Err(TokenomicsError::SponsorshipStagesMustEqualAllocation {
+                stages: stage_total,
+                allocation: sponsorship_allocation,
+            });
+        }
+        if self
+            .sponsorship_stages
+            .iter()
+            .any(|stage| stage.usd_per_ac_cents == 0)
+        {
+            return Err(TokenomicsError::InvalidRoundPrice);
+        }
+
+        Ok(())
+    }
+}
+
+/// A draft allocation deliberately stores its exact AC amount rather than
+/// basis points.  25M / 15M / 15M cannot be represented exactly in whole basis
+/// points of a 55M cap, so a rounded percentage must never become the source of
+/// truth.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DraftAllocation {
+    pub name: &'static str,
+    pub amount: Coin,
+}
+
+impl DraftAllocation {
+    pub fn new(name: &'static str, amount_ac: u64) -> Self {
+        Self {
+            name,
+            amount: Coin::from_ac(amount_ac).expect("draft allocation fits max supply"),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SponsorshipStage {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub reward_pool: Coin,
+    /// The draft contribution ratio, expressed as USD cents per AC.
+    pub usd_per_ac_cents: u64,
+}
+
+impl SponsorshipStage {
+    pub fn new(
+        id: &'static str,
+        name: &'static str,
+        reward_pool_ac: u64,
+        usd_per_ac_cents: u64,
+    ) -> Self {
+        Self {
+            id,
+            name,
+            reward_pool: Coin::from_ac(reward_pool_ac).expect("draft stage fits max supply"),
+            usd_per_ac_cents,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TeamReleasePolicy {
+    /// Every numeric cap is calculated from the then-current team balance.
+    pub uses_current_team_balance: bool,
+    /// Unused capacity must not increase a later period's cap.
+    pub unused_capacity_carries_forward: bool,
+    pub periods: Vec<TeamReleasePeriod>,
+}
+
+impl TeamReleasePolicy {
+    pub fn current_draft() -> Self {
+        Self {
+            uses_current_team_balance: true,
+            unused_capacity_carries_forward: false,
+            periods: vec![
+                TeamReleasePeriod::locked(1, Some(1)),
+                TeamReleasePeriod::current_balance_cap(2, Some(3), 1_200),
+                TeamReleasePeriod::current_balance_cap(4, Some(4), 2_500),
+                TeamReleasePeriod::current_balance_cap(5, Some(6), 5_000),
+                // Year 7+ must remain explicitly unconfigured until the
+                // economics review selects a continuing rule.
+                TeamReleasePeriod::pending_decision(7, None),
+            ],
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TeamReleasePeriod {
+    pub first_year: u16,
+    pub last_year: Option<u16>,
+    pub rule: TeamReleaseRule,
+}
+
+impl TeamReleasePeriod {
+    pub const fn locked(first_year: u16, last_year: Option<u16>) -> Self {
+        Self {
+            first_year,
+            last_year,
+            rule: TeamReleaseRule::Locked,
+        }
+    }
+
+    pub const fn current_balance_cap(
+        first_year: u16,
+        last_year: Option<u16>,
+        maximum_release_bps: u16,
+    ) -> Self {
+        Self {
+            first_year,
+            last_year,
+            rule: TeamReleaseRule::CurrentBalanceCap {
+                maximum_release_bps,
+            },
+        }
+    }
+
+    pub const fn pending_decision(first_year: u16, last_year: Option<u16>) -> Self {
+        Self {
+            first_year,
+            last_year,
+            rule: TeamReleaseRule::PendingDecision,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TeamReleaseRule {
+    Locked,
+    CurrentBalanceCap { maximum_release_bps: u16 },
+    PendingDecision,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TokenomicsPlan {
     pub symbol: &'static str,
@@ -501,15 +729,18 @@ pub enum TokenomicsError {
     ContributionBelowMinimum,
     ContributionExceedsInvestorLimit,
     ContributionExceedsRoundCap,
+    DraftAllocationsMustEqualMaxSupply { actual: Coin, max_supply: Coin },
     InvalidRoundPrice,
     InvalidUsdAmount,
     InvestorNotApproved,
     MissingJurisdiction,
     MissingPublicSaleAllocation,
+    MissingSponsorshipAllocation,
     ProfessionalInvestorRequired,
     SaleRoundsExceedPublicAllocation { rounds: Coin, allocation: Coin },
     SecondaryWindowNotEligible,
     SecondaryListingBelowMinimum { min_ac: u64, actual_ac: u64 },
+    SponsorshipStagesMustEqualAllocation { stages: Coin, allocation: Coin },
     SupplyOverflow,
 }
 
@@ -547,6 +778,52 @@ pub fn parse_usd_to_cents(value: &str) -> Result<u64, TokenomicsError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn ac_economy_working_draft_reconciles_to_the_hard_cap() {
+        let draft = AcEconomyWorkingDraft::current();
+        assert_eq!(draft.validate(), Ok(()));
+        assert_eq!(draft.max_supply, Coin::from_ac(55_000_000).unwrap());
+        assert_eq!(
+            draft.allocation_amount("Sponsorship Rewards"),
+            Some(Coin::from_ac(25_000_000).unwrap())
+        );
+        assert_eq!(
+            draft.allocation_amount("Team / Core Development"),
+            Some(Coin::from_ac(15_000_000).unwrap())
+        );
+        assert_eq!(
+            draft.allocation_amount("Ecosystem / Protocol Reserve"),
+            Some(Coin::from_ac(15_000_000).unwrap())
+        );
+    }
+
+    #[test]
+    fn working_draft_sponsorship_schedule_reconciles_to_25m_and_76m() {
+        let draft = AcEconomyWorkingDraft::current();
+        let stage_total = draft
+            .sponsorship_stages
+            .iter()
+            .try_fold(Coin::ZERO, |total, stage| {
+                total.checked_add(stage.reward_pool)
+            })
+            .unwrap();
+        assert_eq!(stage_total, Coin::from_ac(25_000_000).unwrap());
+        assert_eq!(
+            draft.maximum_sponsorship_contribution_usd_cents(),
+            Some(7_600_000_000)
+        );
+    }
+
+    #[test]
+    fn working_draft_keeps_year_seven_release_undecided() {
+        let draft = AcEconomyWorkingDraft::current();
+        assert!(!draft.team_release_policy.unused_capacity_carries_forward);
+        assert_eq!(
+            draft.team_release_policy.periods.last().unwrap().rule,
+            TeamReleaseRule::PendingDecision
+        );
+    }
 
     #[test]
     fn default_tokenomics_is_valid() {
